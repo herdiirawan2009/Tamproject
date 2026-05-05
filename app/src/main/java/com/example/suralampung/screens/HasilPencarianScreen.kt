@@ -11,7 +11,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
 
 @Composable
-fun HasilPencarianScreen(onItemClick: () -> Unit, onBack: () -> Unit) {
+fun HasilPencarianScreen(onItemClick: (String) -> Unit, onBack: () -> Unit) {
 
     val daftarBarang = listOf(
         Barang("Kopi Robusta Lampung","Perkebunan","Rp 55.000","Bandar Lampung","UMKM Tani Lampung","Tersedia","4.9","Kopi robusta khas Lampung"),
@@ -59,7 +59,7 @@ fun HasilPencarianScreen(onItemClick: () -> Unit, onBack: () -> Unit) {
                         Spacer(modifier = Modifier.height(12.dp))
 
                         Button(
-                            onClick = { onItemClick() },
+                            onClick = { onItemClick(barang.nama) },
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8B1C31))
                         ) {
                             Text("Lihat Detail", color = Color.White)

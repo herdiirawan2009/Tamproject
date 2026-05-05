@@ -267,7 +267,7 @@ fun RuangChatView(
             Spacer(modifier = Modifier.width(8.dp))
 
             IconButton(
-                onClick = { /* Logika Kirim Pesan */ },
+                onClick = {  },
                 modifier = Modifier
                     .size(48.dp)
                     .background(primaryColor, CircleShape)

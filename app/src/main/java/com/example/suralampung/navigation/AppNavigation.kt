@@ -2,8 +2,11 @@ package com.example.suralampung.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
+
 import com.example.suralampung.screens.DetailBarangScreen
 import com.example.suralampung.screens.HasilPencarianScreen
 import com.example.suralampung.screens.HomeScreen
@@ -49,14 +52,14 @@ fun AppNavigation(navController: NavHostController) {
                 onSplashClick = { navController.navigate("splash") },
                 onAddClick = { navController.navigate("tambah") },
                 onSeeAllClick = { navController.navigate("search") },
-                onDetailClick = { _ -> navController.navigate("detail") }
+                onDetailClick = { nama -> navController.navigate("detail/$nama") }
             )
         }
 
         composable("search") {
             HasilPencarianScreen(
-                onItemClick = {
-                    navController.navigate("detail")
+                onItemClick = { nama ->
+                    navController.navigate("detail/$nama")
                 },
                 onBack = {
                     navController.popBackStack()
@@ -64,8 +67,13 @@ fun AppNavigation(navController: NavHostController) {
             )
         }
 
-        composable("detail") {
+        composable(
+            route = "detail/{nama}",
+            arguments = listOf(navArgument("nama") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val nama = backStackEntry.arguments?.getString("nama")
             DetailBarangScreen(
+                barangNama = nama,
                 onBack = {
                     navController.popBackStack()
                 }
