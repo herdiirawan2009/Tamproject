@@ -14,6 +14,7 @@ import com.example.suralampung.screens.RegisterScreen
 import com.example.suralampung.screens.RiwayatScreen
 import com.example.suralampung.screens.SplashScreen
 import com.example.suralampung.screens.ChatPenjualScreen
+import com.example.suralampung.screens.TambahSumberDayaScreen
 
 @Composable
 fun AppNavigation(navController: NavHostController) {
@@ -41,17 +42,14 @@ fun AppNavigation(navController: NavHostController) {
 
         composable("home") {
             HomeScreen(
-                onBack = { navController.popBackStack() },
                 onCartClick = { navController.navigate("keranjang") },
                 onHistoryClick = { navController.navigate("riwayat") },
                 onProfileClick = { navController.navigate("profil") },
-
-
                 onChatClick = { navController.navigate("chat") },
-
                 onSplashClick = { navController.navigate("splash") },
+                onAddClick = { navController.navigate("tambah") },
                 onSeeAllClick = { navController.navigate("search") },
-                onDetailClick = { navController.navigate("detail") }
+                onDetailClick = { _ -> navController.navigate("detail") }
             )
         }
 
@@ -105,6 +103,14 @@ fun AppNavigation(navController: NavHostController) {
 
         composable("chat") {
             ChatPenjualScreen(
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable("tambah") {
+            TambahSumberDayaScreen(
                 onBack = {
                     navController.popBackStack()
                 }

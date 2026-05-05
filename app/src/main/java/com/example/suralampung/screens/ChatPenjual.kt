@@ -43,23 +43,18 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// --- MODEL DATA ---
 data class Penjual(val id: Int, val nama: String, val pesanTerakhir: String)
 data class ChatMessage(val text: String, val isFromMe: Boolean)
 
 @Composable
 fun ChatPenjualScreen(onBack: () -> Unit = {}) {
-    // State untuk melacak penjual mana yang sedang diajak chat
-    // Jika null, berarti sedang berada di halaman daftar penjual
     var selectedPenjual by remember { mutableStateOf<Penjual?>(null) }
 
-    // Tema Warna
     val primaryColor = Color(0xFF8B1C31)
     val backgroundColor = Color(0xFFF8F9FA)
     val surfaceColor = Color(0xFFFFFFFF)
     val textPrimary = Color(0xFF212121)
 
-    // Daftar Dummy Penjual
     val daftarPenjual = remember {
         listOf(
             Penjual(1, "Bapak Budi (Pertanian)", "Stok jagung aman mas."),
@@ -68,16 +63,13 @@ fun ChatPenjualScreen(onBack: () -> Unit = {}) {
         )
     }
 
-    // --- LOGIKA PERPINDAHAN HALAMAN ---
     if (selectedPenjual == null) {
-        // 1. TAMPILAN DAFTAR PENJUAL
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(backgroundColor)
                 .padding(horizontal = 16.dp)
         ) {
-            // Memberi jarak kosong di atas agar sejajar
             Spacer(modifier = Modifier.height(32.dp))
 
             Row(
@@ -110,25 +102,23 @@ fun ChatPenjualScreen(onBack: () -> Unit = {}) {
                         penjual = penjual,
                         surfaceColor = surfaceColor,
                         textPrimary = textPrimary,
-                        onClick = { selectedPenjual = penjual } // Masuk ke chat saat di-klik
+                        onClick = { selectedPenjual = penjual }
                     )
                 }
             }
         }
     } else {
-        // 2. TAMPILAN RUANG CHAT DENGAN PENJUAL TERPILIH
         RuangChatView(
             penjual = selectedPenjual!!,
             primaryColor = primaryColor,
             backgroundColor = backgroundColor,
             surfaceColor = surfaceColor,
             textPrimary = textPrimary,
-            onBack = { selectedPenjual = null } // Mengosongkan state untuk kembali ke daftar penjual
+            onBack = { selectedPenjual = null }
         )
     }
 }
 
-// --- KOMPONEN DAFTAR PENJUAL ---
 @Composable
 fun ItemPenjual(penjual: Penjual, surfaceColor: Color, textPrimary: Color, onClick: () -> Unit) {
     Row(
@@ -170,7 +160,6 @@ fun ItemPenjual(penjual: Penjual, surfaceColor: Color, textPrimary: Color, onCli
     }
 }
 
-// --- KOMPONEN RUANG CHAT ---
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RuangChatView(
@@ -197,7 +186,6 @@ fun RuangChatView(
             .background(backgroundColor)
             .padding(horizontal = 16.dp)
     ) {
-        // Memberi jarak kosong di atas agar sejajar
         Spacer(modifier = Modifier.height(32.dp))
 
         Row(
@@ -228,7 +216,7 @@ fun RuangChatView(
 
             Column {
                 Text(
-                    text = penjual.nama, // Nama otomatis menyesuaikan
+                    text = penjual.nama,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = textPrimary
@@ -294,7 +282,6 @@ fun RuangChatView(
     }
 }
 
-// --- KOMPONEN BUBBLE PESAN ---
 @Composable
 fun ChatBubble(message: ChatMessage, primaryColor: Color, surfaceColor: Color, textPrimary: Color) {
     Row(

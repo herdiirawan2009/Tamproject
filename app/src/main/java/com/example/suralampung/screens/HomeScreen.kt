@@ -2,6 +2,7 @@ package com.example.suralampung.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -17,7 +18,8 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email // Import ikon Email untuk Chat
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
@@ -28,37 +30,41 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import com.example.suralampung.data.Barang
+import com.example.suralampung.data.RetrofitClient
 
 data class Kategori(val nama: String)
 
-data class ProdukSumberDaya(
-    val nama: String,
-    val kategori: String,
-    val harga: String,
-    val lokasi: String
-)
-
 @Composable
 fun HomeScreen(
-    onBack: () -> Unit,
     onCartClick: () -> Unit,
     onHistoryClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
-    onChatClick: () -> Unit = {}, // Mengubah nama parameter menjadi onChatClick
+    onChatClick: () -> Unit = {},
     onSplashClick: () -> Unit = {},
+    onAddClick: () -> Unit = {},
     onSeeAllClick: () -> Unit,
-    onDetailClick: () -> Unit = {}
+    onDetailClick: (String) -> Unit = {}
 ) {
     val daftarKategori = listOf(
         Kategori("Pertanian"),
@@ -66,11 +72,21 @@ fun HomeScreen(
         Kategori("Peternakan"),
         Kategori("Kerajinan")
     )
-    val daftarProduk = listOf(
-        ProdukSumberDaya("Kopi Robusta Lampung", "Perkebunan", "Rp 85.000", "Lampung Barat"),
-        ProdukSumberDaya("Keripik Pisang", "UMKM", "Rp 25.000", "Bandar Lampung"),
-        ProdukSumberDaya("Kain Tapis Lampung", "Kerajinan", "Rp 250.000", "Bandar Lampung")
-    )
+
+    var listBarang by remember { mutableStateOf<List<Barang>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var isError by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        try {
+            listBarang = RetrofitClient.instance.getBarang()
+            isLoading = false
+            isError = false
+        } catch (_: Exception) {
+            isLoading = false
+            isError = true
+        }
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -83,8 +99,10 @@ fun HomeScreen(
             QuickMenu(
                 onHistoryClick = onHistoryClick,
                 onCartClick = onCartClick,
-                onChatClick = onChatClick, // Memanggil onChatClick
-                onSplashClick = onSplashClick
+                onChatClick = onChatClick,
+                onSplashClick = onSplashClick,
+                onAddClick = onAddClick,
+                onSeeAllClick = onSeeAllClick
             )
 
             SearchBarDummy()
@@ -93,9 +111,34 @@ fun HomeScreen(
             KategoriRow(daftarKategori)
             SectionTitle("Rekomendasi")
         }
-
-        items(daftarProduk) { item ->
-            CardProduk(item, onDetailClick)
+        if (isLoading) {
+            item {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color(0xFF8B1C31))
+                }
+            }
+        }
+        else if (isError || listBarang.isEmpty()) {
+            item {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        "Gagal memuat data. Pastikan internet menyala.",
+                        color = Color.Red,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+        else {
+            items(listBarang) { item ->
+                CardProduk(item = item, onDetailClick = { onDetailClick(item.nama) })
+            }
         }
     }
 }
@@ -104,19 +147,33 @@ fun HomeScreen(
 fun QuickMenu(
     onHistoryClick: () -> Unit,
     onCartClick: () -> Unit,
-    onChatClick: () -> Unit, // Mengubah parameter
-    onSplashClick: () -> Unit
+    onChatClick: () -> Unit,
+    onSplashClick: () -> Unit,
+    onAddClick: () -> Unit,
+    onSeeAllClick: () -> Unit
 ) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceAround
+            .padding(vertical = 16.dp),
     ) {
-        MenuIcon(Icons.Default.History, "Riwayat", onHistoryClick)
-        MenuIcon(Icons.Default.ShoppingCart, "Keranjang", onCartClick)
-        MenuIcon(Icons.Default.Email, "Chat", onChatClick) // Mengubah Ikon dan Label
-        MenuIcon(Icons.Default.Refresh, "Splash", onSplashClick)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceAround
+        ) {
+            MenuIcon(Icons.Default.History, "Riwayat", onHistoryClick)
+            MenuIcon(Icons.Default.ShoppingCart, "Keranjang", onCartClick)
+            MenuIcon(Icons.Default.Email, "Chat", onChatClick)
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceAround
+        ) {
+            MenuIcon(Icons.Default.Add, "Tambah", onAddClick)
+            MenuIcon(Icons.Default.Search, "Cari", onSeeAllClick) // Tombol Cari/Detail Produk List
+            MenuIcon(Icons.Default.Refresh, "Splash", onSplashClick)
+        }
     }
 }
 
@@ -273,7 +330,7 @@ fun KategoriRow(list: List<Kategori>) {
 }
 
 @Composable
-fun CardProduk(item: ProdukSumberDaya, onDetailClick: () -> Unit) {
+fun CardProduk(item: Barang, onDetailClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -283,39 +340,60 @@ fun CardProduk(item: ProdukSumberDaya, onDetailClick: () -> Unit) {
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         onClick = onDetailClick
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text(
-                        text = item.nama,
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF212121)
-                    )
-                    Text(text = item.kategori, color = Color.Gray, fontSize = 13.sp)
-                }
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AsyncImage(
+                model = item.imageUrl,
+                contentDescription = item.nama,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(RoundedCornerShape(8.dp))
+            )
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = item.harga,
+                    text = item.nama,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF212121)
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = "Rp ${item.harga}",
                     color = Color(0xFF8B1C31),
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp
                 )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.LocationOn,
+                        contentDescription = null,
+                        tint = Color.Gray,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(text = item.lokasi, color = Color.Gray, fontSize = 13.sp)
+                }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.LocationOn,
-                    contentDescription = null,
-                    tint = Color.Gray,
-                    modifier = Modifier.size(14.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(text = item.lokasi, color = Color.Gray, fontSize = 13.sp)
+            // Tombol Detail di setiap kartu
+            Button(
+                onClick = onDetailClick,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8B1C31)),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text("Detail", color = Color.White, fontSize = 12.sp)
             }
         }
     }
