@@ -77,7 +77,7 @@ fun ChatPenjualScreen(onBack: () -> Unit = {}) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Button(
-                    onClick = onBack, // Kembali ke layar sebelumnya (Home)
+                    onClick = onBack,
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = primaryColor),
                     contentPadding = PaddingValues(0.dp)
                 ) {
@@ -176,7 +176,7 @@ fun RuangChatView(
         listOf(
             ChatMessage("Halo, apakah sumber daya ini masih tersedia?", true),
             ChatMessage("Halo kak! Iya, stoknya masih banyak.", false),
-            ChatMessage(penjual.pesanTerakhir, false) // Pesan terakhir dinamis menyesuaikan penjual
+            ChatMessage(penjual.pesanTerakhir, false)
         )
     }
 
