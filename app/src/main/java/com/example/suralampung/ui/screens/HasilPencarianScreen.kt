@@ -1,4 +1,4 @@
-package com.example.suralampung.screens
+package com.example.suralampung.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -48,21 +48,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.example.suralampung.data.Barang
-import com.example.suralampung.data.RetrofitClient
+import com.example.suralampung.data.network.RetrofitClient
 
 @Composable
 fun HasilPencarianScreen(onItemClick: (String) -> Unit, onBack: () -> Unit) {
 
-    // State untuk menampung data dari API
     var listBarang by remember { mutableStateOf<List<Barang>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var isError by remember { mutableStateOf(false) }
 
-    // State untuk fitur pencarian (Search)
     var searchQuery by remember { mutableStateOf("") }
 
-    // Mengambil data dari API saat halaman dibuka
     LaunchedEffect(Unit) {
         try {
             listBarang = RetrofitClient.instance.getBarang()
@@ -74,7 +70,6 @@ fun HasilPencarianScreen(onItemClick: (String) -> Unit, onBack: () -> Unit) {
         }
     }
 
-    // Logika untuk menyaring (filter) barang berdasarkan ketikan user
     val filteredList = listBarang.filter {
         it.nama.contains(searchQuery, ignoreCase = true)
     }
@@ -84,7 +79,6 @@ fun HasilPencarianScreen(onItemClick: (String) -> Unit, onBack: () -> Unit) {
             .fillMaxSize()
             .background(Color(0xFFF8F9FA))
     ) {
-        // HEADER PENCARIAN & TOMBOL KEMBALI
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -116,7 +110,6 @@ fun HasilPencarianScreen(onItemClick: (String) -> Unit, onBack: () -> Unit) {
             )
         }
 
-        // KOLOM PENCARIAN (SEARCH BAR)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -158,7 +151,6 @@ fun HasilPencarianScreen(onItemClick: (String) -> Unit, onBack: () -> Unit) {
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
         )
 
-        // TAMPILAN LIST ATAU LOADING
         if (isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = Color(0xFF8B1C31))
@@ -172,7 +164,6 @@ fun HasilPencarianScreen(onItemClick: (String) -> Unit, onBack: () -> Unit) {
                 Text("Barang tidak ditemukan", color = Color.Gray, fontWeight = FontWeight.Medium)
             }
         } else {
-            // LIST HASIL PENCARIAN
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = 24.dp)
@@ -192,7 +183,6 @@ fun HasilPencarianScreen(onItemClick: (String) -> Unit, onBack: () -> Unit) {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
 
-                            // GAMBAR DARI API MENGGUNAKAN ASYNCIMAGE
                             AsyncImage(
                                 model = barang.imageUrl,
                                 contentDescription = barang.nama,
@@ -205,7 +195,6 @@ fun HasilPencarianScreen(onItemClick: (String) -> Unit, onBack: () -> Unit) {
 
                             Spacer(modifier = Modifier.width(16.dp))
 
-                            // INFORMASI PRODUK
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = barang.nama,
@@ -231,7 +220,6 @@ fun HasilPencarianScreen(onItemClick: (String) -> Unit, onBack: () -> Unit) {
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    // Lokasi
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Icon(
                                             imageVector = Icons.Rounded.LocationOn,
@@ -247,7 +235,6 @@ fun HasilPencarianScreen(onItemClick: (String) -> Unit, onBack: () -> Unit) {
                                         )
                                     }
 
-                                    // Rating Dummy (Karena di HomeScreen rating tidak ada di constructor Barang)
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Icon(
                                             imageVector = Icons.Rounded.Star,

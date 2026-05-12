@@ -7,16 +7,16 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 
-import com.example.suralampung.screens.DetailBarangScreen
-import com.example.suralampung.screens.HasilPencarianScreen
-import com.example.suralampung.screens.HomeScreen
-import com.example.suralampung.screens.KeranjangScreen
-import com.example.suralampung.screens.LoginScreen
-import com.example.suralampung.screens.ProfilScreen
-import com.example.suralampung.screens.RegisterScreen
-import com.example.suralampung.screens.RiwayatScreen
-import com.example.suralampung.screens.SplashScreen
-import com.example.suralampung.screens.ChatPenjualScreen
+import com.example.suralampung.ui.screens.DetailBarangScreen
+import com.example.suralampung.ui.screens.HasilPencarianScreen
+import com.example.suralampung.ui.screens.HomeScreen
+import com.example.suralampung.ui.screens.KeranjangScreen
+import com.example.suralampung.ui.screens.LoginScreen
+import com.example.suralampung.ui.screens.ProfilScreen
+import com.example.suralampung.ui.screens.RegisterScreen
+import com.example.suralampung.ui.screens.RiwayatScreen
+import com.example.suralampung.ui.screens.SplashScreen
+import com.example.suralampung.ui.screens.ChatPenjualScreen
 
 @Composable
 fun AppNavigation(navController: NavHostController) {

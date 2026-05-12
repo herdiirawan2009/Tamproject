@@ -1,4 +1,4 @@
-package com.example.suralampung.screens
+package com.example.suralampung.ui.screens
 
 data class Barang(
     val nama: String,
@@ -8,5 +8,6 @@ data class Barang(
     val penyedia: String,
     val stok: String,
     val rating: String,
-    val deskripsi: String
+    val deskripsi: String,
+    val imageUrl: String
 )

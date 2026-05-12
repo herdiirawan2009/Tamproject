@@ -1,4 +1,4 @@
-package com.example.suralampung.screens
+package com.example.suralampung.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -24,8 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.example.suralampung.data.Barang
-import com.example.suralampung.data.RetrofitClient
+import com.example.suralampung.data.network.RetrofitClient
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -99,15 +98,16 @@ fun DetailBarangScreen(
                 ) {
                     Column {
                         Text("Harga Total", color = Color.Gray, fontSize = 12.sp)
+                        val hargaDouble = currentBarang.harga.toDoubleOrNull() ?: 0.0
                         Text(
-                            text = formatRupiah.format(currentBarang.harga).replace("Rp", "Rp "),
+                            text = formatRupiah.format(hargaDouble).replace("Rp", "Rp "),
                             color = Color(0xFF8B1C31),
                             fontSize = 22.sp,
                             fontWeight = FontWeight.ExtraBold
                         )
                     }
                     Button(
-                        onClick = { /* TODO: Aksi pesan */ },
+                        onClick = {  },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8B1C31)),
                         shape = RoundedCornerShape(16.dp),
                         contentPadding = PaddingValues(horizontal = 28.dp, vertical = 14.dp),
@@ -247,7 +247,7 @@ fun DetailBarangScreen(
                     color = Color(0xFF4A4A4A),
                     lineHeight = 26.sp
                 )
-                
+
                 Spacer(modifier = Modifier.height(40.dp))
             }
         }

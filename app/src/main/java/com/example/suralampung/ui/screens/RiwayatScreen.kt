@@ -1,4 +1,4 @@
-package com.example.suralampung.screens
+package com.example.suralampung.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -47,8 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.example.suralampung.data.Barang
-import com.example.suralampung.data.RetrofitClient
+import com.example.suralampung.data.network.RetrofitClient
 
 @Composable
 fun ItemRiwayat(barang: Barang, status: String) {

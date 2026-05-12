@@ -1,4 +1,4 @@
-package com.example.suralampung.screens
+package com.example.suralampung.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -45,8 +45,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.example.suralampung.data.Barang
-import com.example.suralampung.data.RetrofitClient
+import com.example.suralampung.data.network.RetrofitClient
+import java.text.NumberFormat
+import java.util.Locale
 
 @Composable
 fun ItemKeranjang(barang: Barang) {
@@ -119,10 +120,10 @@ fun KeranjangScreen(onBack: () -> Unit) {
     }
 
     val totalHarga = listKeranjang.sumOf { barang ->
-        barang.harga.toString().replace(Regex("[^0-9]"), "").toIntOrNull() ?: 0
+        barang.harga.toString().replace(Regex("[^0-9]"), "").toLongOrNull() ?: 0L
     }
 
-    val formatTotal = java.text.NumberFormat.getInstance(java.util.Locale("id", "ID")).format(totalHarga)
+    val formatTotal = NumberFormat.getInstance(Locale("id", "ID")).format(totalHarga)
 
     Column(
         modifier = Modifier

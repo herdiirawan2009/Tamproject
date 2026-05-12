@@ -1,4 +1,4 @@
-package com.example.suralampung.screens
+package com.example.suralampung.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
