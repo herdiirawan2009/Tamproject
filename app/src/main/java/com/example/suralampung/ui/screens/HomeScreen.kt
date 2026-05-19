@@ -373,7 +373,7 @@ fun CardProduk(item: Barang, onDetailClick: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             AsyncImage(
-                model = item.imageUrl,
+                model = item.image_url,
                 contentDescription = item.nama,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier

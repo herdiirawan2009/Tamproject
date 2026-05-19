@@ -116,7 +116,7 @@ fun DetailBarangScreen(
                 ) {
                     Column {
                         Text("Harga Total", color = Color.Gray, fontSize = 12.sp)
-                        val hargaDouble = currentBarang.harga.toDoubleOrNull() ?: 0.0
+                        val hargaDouble = currentBarang.harga.toDouble()
                         Text(
                             text = formatRupiah.format(hargaDouble).replace("Rp", "Rp "),
                             color = Color(0xFF8B1C31),
@@ -132,7 +132,7 @@ fun DetailBarangScreen(
                                     "id_barang" to currentBarang.nama,
                                     "nama" to currentBarang.nama,
                                     "harga" to currentBarang.harga,
-                                    "gambar" to currentBarang.imageUrl,
+                                    "gambar" to currentBarang.image_url,
                                     "jumlah" to 1
                                 )
                                 FirebaseFirestore.getInstance()
@@ -182,7 +182,7 @@ fun DetailBarangScreen(
             ) {
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
-                        .data(currentBarang.imageUrl)
+                        .data(currentBarang.image_url)
                         .crossfade(true)
                         .build(),
                     contentDescription = currentBarang.nama,

@@ -21,12 +21,9 @@ import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun AppNavigation(navController: NavHostController) {
-    val currentUser = FirebaseAuth.getInstance().currentUser
-    val startRoute = if (currentUser != null) "home" else "login"
-
     NavHost(
         navController = navController,
-        startDestination = startRoute
+        startDestination = "login"
     ) {
         composable("splash") {
             SplashScreen(

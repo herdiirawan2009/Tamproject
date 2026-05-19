@@ -1,13 +1,16 @@
 package com.example.suralampung.ui.screens
 
+import com.google.gson.annotations.SerializedName
+
 data class Barang(
+    @SerializedName("nama")
     val nama: String,
-    val kategori: String,
-    val harga: String,
+    @SerializedName("harga")
+    val harga: Int,
+    @SerializedName("lokasi")
     val lokasi: String,
-    val penyedia: String,
-    val stok: String,
-    val rating: String,
+    @SerializedName("deskripsi")
     val deskripsi: String,
-    val imageUrl: String
+    @SerializedName("image_url")
+    val image_url: String
 )

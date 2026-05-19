@@ -72,7 +72,7 @@ fun ItemRiwayat(barang: Barang, status: String) {
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     AsyncImage(
-                        model = barang.imageUrl,
+                        model = barang.image_url,
                         contentDescription = barang.nama,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier

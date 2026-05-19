@@ -184,7 +184,7 @@ fun HasilPencarianScreen(onItemClick: (String) -> Unit, onBack: () -> Unit) {
                         ) {
 
                             AsyncImage(
-                                model = barang.imageUrl,
+                                model = barang.image_url,
                                 contentDescription = barang.nama,
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier
