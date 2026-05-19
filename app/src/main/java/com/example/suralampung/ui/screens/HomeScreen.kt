@@ -38,11 +38,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,9 +53,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import com.example.suralampung.data.network.RetrofitClient
-import kotlinx.coroutines.launch
+import com.example.suralampung.viewmodel.HomeViewModel
 
 data class Kategori(val nama: String)
 
@@ -68,7 +67,8 @@ fun HomeScreen(
     onProfileClick: () -> Unit = {},
     onChatClick: () -> Unit = {},
     onSeeAllClick: () -> Unit,
-    onDetailClick: (String) -> Unit = {}
+    onDetailClick: (String) -> Unit = {},
+    viewModel: HomeViewModel = viewModel()
 ) {
     val daftarKategori = listOf(
         Kategori("Pertanian"),
@@ -77,35 +77,19 @@ fun HomeScreen(
         Kategori("Kerajinan")
     )
 
-    var listBarang by remember { mutableStateOf<List<Barang>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(true) }
-    var isError by remember { mutableStateOf(false) }
+    val listBarang by viewModel.listBarang.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val isError by viewModel.isError.collectAsState()
     var isRefreshing by remember { mutableStateOf(false) }
 
-    val coroutineScope = rememberCoroutineScope()
     val pullRefreshState = rememberPullToRefreshState()
-
-    suspend fun fetchData() {
-        try {
-            listBarang = RetrofitClient.instance.getBarang()
-            isError = false
-        } catch (_: Exception) {
-            isError = true
-        } finally {
-            isLoading = false
-            isRefreshing = false
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        fetchData()
-    }
 
     PullToRefreshBox(
         isRefreshing = isRefreshing,
         onRefresh = {
             isRefreshing = true
-            coroutineScope.launch { fetchData() }
+            viewModel.fetchBarang()
+            isRefreshing = false
         },
         state = pullRefreshState,
         modifier = Modifier

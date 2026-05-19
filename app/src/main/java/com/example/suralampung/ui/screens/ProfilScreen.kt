@@ -35,6 +35,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,9 +49,30 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
 fun ProfilScreen(onLogout: () -> Unit = {}, onBack: () -> Unit = {}) {
+    var nama by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var role by remember { mutableStateOf("") }
+
+    val currentUser = FirebaseAuth.getInstance().currentUser
+
+    LaunchedEffect(Unit) {
+        currentUser?.uid?.let { uid ->
+            FirebaseFirestore.getInstance().collection("users").document(uid).get()
+                .addOnSuccessListener { document ->
+                    if (document != null) {
+                        nama = document.getString("nama") ?: ""
+                        email = document.getString("email") ?: ""
+                        role = document.getString("role") ?: ""
+                    }
+                }
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -118,14 +144,14 @@ fun ProfilScreen(onLogout: () -> Unit = {}, onBack: () -> Unit = {}) {
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
-                        text = "Radin Intan",
+                        text = nama,
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF212121)
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "radin.intan@email.com",
+                        text = email,
                         fontSize = 15.sp,
                         color = Color.Gray,
                         fontWeight = FontWeight.Medium
@@ -139,7 +165,7 @@ fun ProfilScreen(onLogout: () -> Unit = {}, onBack: () -> Unit = {}) {
                             .padding(horizontal = 16.dp, vertical = 8.dp)
                     ) {
                         Text(
-                            text = "Rakyat / Pembeli",
+                            text = if (role == "pembeli") "Rakyat / Pembeli" else role,
                             color = Color(0xFF5C101F),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold
@@ -187,7 +213,10 @@ fun ProfilScreen(onLogout: () -> Unit = {}, onBack: () -> Unit = {}) {
                 .padding(24.dp)
         ) {
             Button(
-                onClick = onLogout,
+                onClick = {
+                    FirebaseAuth.getInstance().signOut()
+                    onLogout()
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -236,7 +265,7 @@ fun MenuItem(icon: ImageVector, title: String) {
             ) {
                 Icon(
                     imageVector = icon,
-                    contentDescription = title,
+                    contentDescription = null,
                     tint = Color(0xFF8B1C31),
                     modifier = Modifier.size(20.dp)
                 )

@@ -1,7 +1,22 @@
 package com.example.suralampung.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,8 +25,19 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,36 +48,28 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.example.suralampung.data.network.RetrofitClient
+import com.example.suralampung.viewmodel.DetailViewModel
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import java.text.NumberFormat
 import java.util.Locale
 
 @Composable
 fun DetailBarangScreen(
     barangNama: String?,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    viewModel: DetailViewModel = viewModel()
 ) {
-    var barang by remember { mutableStateOf<Barang?>(null) }
-    var isLoading by remember { mutableStateOf(true) }
-    var isError by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val barang by viewModel.barang.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val isError by viewModel.isError.collectAsState()
 
     LaunchedEffect(barangNama) {
-        if (barangNama == null) {
-            isLoading = false
-            isError = true
-            return@LaunchedEffect
-        }
-        try {
-            val list = RetrofitClient.instance.getBarang()
-            barang = list.find { it.nama == barangNama }
-            isLoading = false
-            if (barang == null) isError = true
-        } catch (e: Exception) {
-            isLoading = false
-            isError = true
-        }
+        viewModel.fetchDetail(barangNama)
     }
 
     if (isLoading) {
@@ -91,7 +109,7 @@ fun DetailBarangScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .windowInsetsPadding(WindowInsets.navigationBars)
+                        .navigationBarsPadding()
                         .padding(horizontal = 24.dp, vertical = 20.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
@@ -107,7 +125,32 @@ fun DetailBarangScreen(
                         )
                     }
                     Button(
-                        onClick = {  },
+                        onClick = {
+                            val uid = FirebaseAuth.getInstance().currentUser?.uid
+                            if (uid != null) {
+                                val cartItem = hashMapOf(
+                                    "id_barang" to currentBarang.nama,
+                                    "nama" to currentBarang.nama,
+                                    "harga" to currentBarang.harga,
+                                    "gambar" to currentBarang.imageUrl,
+                                    "jumlah" to 1
+                                )
+                                FirebaseFirestore.getInstance()
+                                    .collection("users")
+                                    .document(uid)
+                                    .collection("keranjang")
+                                    .document(currentBarang.nama)
+                                    .set(cartItem)
+                                    .addOnSuccessListener {
+                                        Toast.makeText(context, "Berhasil masuk keranjang", Toast.LENGTH_SHORT).show()
+                                    }
+                                    .addOnFailureListener { e ->
+                                        Toast.makeText(context, "Gagal: ${e.message}", Toast.LENGTH_SHORT).show()
+                                    }
+                            } else {
+                                Toast.makeText(context, "Silakan login terlebih dahulu", Toast.LENGTH_SHORT).show()
+                            }
+                        },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8B1C31)),
                         shape = RoundedCornerShape(16.dp),
                         contentPadding = PaddingValues(horizontal = 28.dp, vertical = 14.dp),
@@ -119,7 +162,7 @@ fun DetailBarangScreen(
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Pesan Sekarang", fontWeight = FontWeight.Bold)
+                        Text("Tambah ke Keranjang", fontWeight = FontWeight.Bold)
                     }
                 }
             }

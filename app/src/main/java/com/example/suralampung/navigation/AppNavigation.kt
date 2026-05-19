@@ -17,12 +17,16 @@ import com.example.suralampung.ui.screens.RegisterScreen
 import com.example.suralampung.ui.screens.RiwayatScreen
 import com.example.suralampung.ui.screens.SplashScreen
 import com.example.suralampung.ui.screens.ChatPenjualScreen
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun AppNavigation(navController: NavHostController) {
+    val currentUser = FirebaseAuth.getInstance().currentUser
+    val startRoute = if (currentUser != null) "home" else "login"
+
     NavHost(
         navController = navController,
-        startDestination = "splash"
+        startDestination = startRoute
     ) {
         composable("splash") {
             SplashScreen(

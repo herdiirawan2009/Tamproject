@@ -1,5 +1,6 @@
 package com.example.suralampung.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -41,16 +42,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.example.suralampung.data.network.RetrofitClient
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import java.text.NumberFormat
 import java.util.Locale
 
 @Composable
-fun ItemKeranjang(barang: Barang) {
+fun ItemKeranjang(item: Map<String, Any>, onDelete: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -64,8 +67,8 @@ fun ItemKeranjang(barang: Barang) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             AsyncImage(
-                model = barang.imageUrl,
-                contentDescription = barang.nama,
+                model = item["gambar"]?.toString() ?: "",
+                contentDescription = item["nama"]?.toString() ?: "",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(80.dp)
@@ -77,7 +80,7 @@ fun ItemKeranjang(barang: Barang) {
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = barang.nama,
+                    text = item["nama"]?.toString() ?: "",
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF212121),
@@ -85,14 +88,14 @@ fun ItemKeranjang(barang: Barang) {
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "Rp ${barang.harga}",
+                    text = "Rp ${item["harga"]}",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color(0xFF8B1C31)
                 )
             }
 
-            IconButton(onClick = { }) {
+            IconButton(onClick = onDelete) {
                 Icon(
                     imageVector = Icons.Rounded.Delete,
                     contentDescription = null,
@@ -105,22 +108,38 @@ fun ItemKeranjang(barang: Barang) {
 
 @Composable
 fun KeranjangScreen(onBack: () -> Unit) {
-    var listKeranjang by remember { mutableStateOf<List<Barang>>(emptyList()) }
+    val context = LocalContext.current
+    var listKeranjang by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var isError by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        try {
-            listKeranjang = RetrofitClient.instance.getBarang()
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        if (uid != null) {
+            FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(uid)
+                .collection("keranjang")
+                .addSnapshotListener { snapshot, e ->
+                    if (e != null) {
+                        isError = true
+                        isLoading = false
+                        return@addSnapshotListener
+                    }
+                    if (snapshot != null) {
+                        listKeranjang = snapshot.documents.map { it.data ?: emptyMap() }
+                        isLoading = false
+                    }
+                }
+        } else {
             isLoading = false
-        } catch (_: Exception) {
-            isError = true
-            isLoading = false
+            Toast.makeText(context, "Silakan login terlebih dahulu", Toast.LENGTH_SHORT).show()
         }
     }
 
-    val totalHarga = listKeranjang.sumOf { barang ->
-        barang.harga.toString().replace(Regex("[^0-9]"), "").toLongOrNull() ?: 0L
+    val totalHarga = listKeranjang.sumOf { item ->
+        val hargaStr = item["harga"]?.toString() ?: "0"
+        hargaStr.replace(Regex("[^0-9]"), "").toLongOrNull() ?: 0L
     }
 
     val formatTotal = NumberFormat.getInstance(Locale("id", "ID")).format(totalHarga)
@@ -177,8 +196,22 @@ fun KeranjangScreen(onBack: () -> Unit) {
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(bottom = 16.dp)
                 ) {
-                    items(listKeranjang) { barang ->
-                        ItemKeranjang(barang)
+                    items(listKeranjang) { item ->
+                        ItemKeranjang(
+                            item = item,
+                            onDelete = {
+                                val uid = FirebaseAuth.getInstance().currentUser?.uid
+                                val idBarang = item["id_barang"]?.toString()
+                                if (uid != null && idBarang != null) {
+                                    FirebaseFirestore.getInstance()
+                                        .collection("users")
+                                        .document(uid)
+                                        .collection("keranjang")
+                                        .document(idBarang)
+                                        .delete()
+                                }
+                            }
+                        )
                     }
                 }
             }
