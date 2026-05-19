@@ -1,5 +1,6 @@
 package com.example.suralampung.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -28,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -38,6 +40,8 @@ import com.example.suralampung.ui.theme.PrimaryRed
 import com.example.suralampung.ui.theme.SecondaryGold
 import com.example.suralampung.ui.theme.TextPrimary
 import com.example.suralampung.ui.theme.TextSecondary
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
 fun RegisterScreen(navController: NavHostController) {
@@ -45,6 +49,7 @@ fun RegisterScreen(navController: NavHostController) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var konfirmasiPassword by remember { mutableStateOf("") }
+    val context = LocalContext.current
 
     Box(
         modifier = Modifier
@@ -81,7 +86,7 @@ fun RegisterScreen(navController: NavHostController) {
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Bangun akses sumber daya yang lebih terbuka untuk rakyat Lampung.",
+                text = "Bangun akses sumber daya yang lebih terbuka.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = Color(0xFFFDE7A1)
             )
@@ -107,14 +112,14 @@ fun RegisterScreen(navController: NavHostController) {
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "Lengkapi data berikut untuk mulai menggunakan layanan SuraLampung.",
+                        text = "Lengkapi data berikut.",
                         style = MaterialTheme.typography.bodyLarge,
                         color = TextSecondary
                     )
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    RegisterField("Nama Lengkap", "Masukkan nama lengkap", nama) { nama = it }
+                    RegisterField("Nama Lengkap", "Masukkan nama", nama) { nama = it }
                     Spacer(modifier = Modifier.height(16.dp))
 
                     RegisterField("Email", "Masukkan email", email) { email = it }
@@ -123,16 +128,43 @@ fun RegisterScreen(navController: NavHostController) {
                     RegisterPasswordField("Password", "Masukkan password", password) { password = it }
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    RegisterPasswordField(
-                        "Konfirmasi Password",
-                        "Ulangi password",
-                        konfirmasiPassword
-                    ) { konfirmasiPassword = it }
+                    RegisterPasswordField("Konfirmasi Password", "Ulangi password", konfirmasiPassword) { konfirmasiPassword = it }
 
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Button(
-                        onClick = { navController.popBackStack() },
+                        onClick = {
+                            if (email.isNotEmpty() && password.isNotEmpty() && nama.isNotEmpty() && password == konfirmasiPassword) {
+                                FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
+                                    .addOnCompleteListener { task ->
+                                        if (task.isSuccessful) {
+                                            val userId = task.result?.user?.uid
+                                            if (userId != null) {
+                                                val userMap = hashMapOf(
+                                                    "nama" to nama,
+                                                    "email" to email,
+                                                    "role" to "pembeli"
+                                                )
+
+                                                FirebaseFirestore.getInstance().collection("users").document(userId)
+                                                    .set(userMap)
+                                                    .addOnCompleteListener { firestoreTask ->
+                                                        if (firestoreTask.isSuccessful) {
+                                                            Toast.makeText(context, "Pendaftaran Berhasil", Toast.LENGTH_SHORT).show()
+                                                            navController.popBackStack()
+                                                        } else {
+                                                            Toast.makeText(context, "Gagal menyimpan data", Toast.LENGTH_SHORT).show()
+                                                        }
+                                                    }
+                                            }
+                                        } else {
+                                            Toast.makeText(context, "Gagal: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                            } else {
+                                Toast.makeText(context, "Data tidak lengkap", Toast.LENGTH_SHORT).show()
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp),
@@ -142,7 +174,7 @@ fun RegisterScreen(navController: NavHostController) {
                         )
                     ) {
                         Text(
-                            text = "Daftar Sekarang",
+                            text = "Daftar",
                             color = Color.White,
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.SemiBold
@@ -167,21 +199,14 @@ fun RegisterScreen(navController: NavHostController) {
 }
 
 @Composable
-fun RegisterField(
-    label: String,
-    placeholder: String,
-    value: String,
-    onValueChange: (String) -> Unit
-) {
+fun RegisterField(label: String, placeholder: String, value: String, onValueChange: (String) -> Unit) {
     Text(
         text = label,
         style = MaterialTheme.typography.bodyLarge,
         color = TextPrimary,
         fontWeight = FontWeight.Medium
     )
-
     Spacer(modifier = Modifier.height(8.dp))
-
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
@@ -200,21 +225,14 @@ fun RegisterField(
 }
 
 @Composable
-fun RegisterPasswordField(
-    label: String,
-    placeholder: String,
-    value: String,
-    onValueChange: (String) -> Unit
-) {
+fun RegisterPasswordField(label: String, placeholder: String, value: String, onValueChange: (String) -> Unit) {
     Text(
         text = label,
         style = MaterialTheme.typography.bodyLarge,
         color = TextPrimary,
         fontWeight = FontWeight.Medium
     )
-
     Spacer(modifier = Modifier.height(8.dp))
-
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,

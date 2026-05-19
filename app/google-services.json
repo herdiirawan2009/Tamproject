@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1027784189870",
+    "project_id": "suralampung-a6408",
+    "storage_bucket": "suralampung-a6408.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1027784189870:android:8e68d21c9a8570fac40a3f",
+        "android_client_info": {
+          "package_name": "com.example.suralampung"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCGBtplcGKfSBMCDevA_MucGIgSOJi3ZeE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
