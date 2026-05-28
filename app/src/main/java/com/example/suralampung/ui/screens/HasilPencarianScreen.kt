@@ -1,5 +1,6 @@
 package com.example.suralampung.ui.screens
 
+import com.example.suralampung.data.model.Barang
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -66,8 +67,8 @@ fun HasilPencarianScreen(
                         harga = (doc.getLong("harga") ?: 0L).toInt(),
                         lokasi = doc.getString("lokasi") ?: "",
                         deskripsi = doc.getString("deskripsi") ?: "",
-                        image_url = doc.getString("image_url") ?: "",
-                        kategori = doc.getString("kategori") ?: ""
+                        imageUrl = doc.getString("image_url") ?: "",
+                        id_penjual = doc.getString("id_penjual") ?: ""
                     )
                 }
                 listBarang = list
@@ -194,7 +195,7 @@ fun HasilPencarianScreen(
                         ) {
 
                             AsyncImage(
-                                model = barang.image_url,
+                                model = barang.imageUrl,
                                 contentDescription = barang.nama,
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier

@@ -1,6 +1,6 @@
 package com.example.suralampung.data.network
 
-import com.example.suralampung.ui.screens.Barang
+import com.example.suralampung.data.model.Barang
 import retrofit2.http.GET
 
 interface ApiService {

@@ -1,5 +1,6 @@
 package com.example.suralampung.ui.screens
 
+import com.example.suralampung.data.model.Barang
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -72,7 +73,7 @@ fun ItemRiwayat(barang: Barang, status: String) {
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     AsyncImage(
-                        model = barang.image_url,
+                        model = barang.imageUrl,
                         contentDescription = barang.nama,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
@@ -173,7 +174,8 @@ fun RiwayatScreen(onBack: () -> Unit) {
                         harga = (doc.getLong("harga") ?: 0L).toInt(),
                         lokasi = doc.getString("lokasi") ?: "",
                         deskripsi = doc.getString("deskripsi") ?: "",
-                        image_url = doc.getString("image_url") ?: ""
+                        imageUrl = doc.getString("image_url") ?: "",
+                        id_penjual = doc.getString("id_penjual") ?: ""
                     )
                 }
                 listRiwayat = list

@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.suralampung.data.network.ImgBBApi
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
@@ -252,13 +253,15 @@ fun TambahSumberDayaScreen(onBack: () -> Unit = {}) {
                                     base64Image = base64
                                 )
                                 val imageUrl = response.data.url
+                                val currentUser = FirebaseAuth.getInstance().currentUser
                                 val data = hashMapOf(
                                     "nama" to nama,
                                     "kategori" to kategori,
                                     "harga" to (harga.toLongOrNull() ?: 0L),
                                     "deskripsi" to deskripsi,
                                     "image_url" to imageUrl,
-                                    "lokasi" to "Lampung"
+                                    "lokasi" to "Lampung",
+                                    "id_penjual" to (currentUser?.uid ?: "")
                                 )
                                 FirebaseFirestore.getInstance().collection("barang").add(data)
                                     .addOnSuccessListener {

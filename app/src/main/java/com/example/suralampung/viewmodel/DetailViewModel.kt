@@ -1,7 +1,7 @@
 package com.example.suralampung.viewmodel
 
 import androidx.lifecycle.ViewModel
-import com.example.suralampung.ui.screens.Barang
+import com.example.suralampung.data.model.Barang
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,7 +35,8 @@ class DetailViewModel : ViewModel() {
                         harga = (doc.getLong("harga") ?: 0L).toInt(),
                         lokasi = doc.getString("lokasi") ?: "",
                         deskripsi = doc.getString("deskripsi") ?: "",
-                        image_url = doc.getString("image_url") ?: ""
+                        imageUrl = doc.getString("image_url") ?: "",
+                        id_penjual = doc.getString("id_penjual") ?: ""
                     )
                     _isError.value = false
                 } else {

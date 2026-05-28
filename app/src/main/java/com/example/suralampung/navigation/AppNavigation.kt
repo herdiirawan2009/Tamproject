@@ -94,6 +94,9 @@ fun AppNavigation(navController: NavHostController) {
                 barangNama = nama,
                 onBack = {
                     navController.popBackStack()
+                },
+                onChatClick = { namaBarang ->
+                    navController.navigate("chat?barang=$namaBarang")
                 }
             )
         }
@@ -133,11 +136,22 @@ fun AppNavigation(navController: NavHostController) {
             )
         }
 
-        composable("chat") {
+        composable(
+            route = "chat?barang={barang}",
+            arguments = listOf(navArgument("barang") {
+                type = NavType.StringType
+                nullable = true
+            })
+        ) { backStackEntry ->
+            val barang = backStackEntry.arguments?.getString("barang")
+            val penjualId = if (barang != null) 1 else null
+
             ChatPenjualScreen(
                 onBack = {
                     navController.popBackStack()
-                }
+                },
+                initialPenjualId = penjualId,
+                initialBarangNama = barang
             )
         }
 

@@ -1,5 +1,6 @@
 package com.example.suralampung.ui.screens
 
+import com.example.suralampung.data.model.Barang
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -384,7 +385,7 @@ fun CardProduk(item: Barang, onDetailClick: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             AsyncImage(
-                model = item.image_url,
+                model = item.imageUrl,
                 contentDescription = item.nama,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier

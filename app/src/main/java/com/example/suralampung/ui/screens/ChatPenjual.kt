@@ -52,14 +52,11 @@ data class Penjual(val id: Int, val nama: String, val pesanTerakhir: String)
 data class ChatMessage(val text: String, val isFromMe: Boolean)
 
 @Composable
-fun ChatPenjualScreen(onBack: () -> Unit = {}) {
-    var selectedPenjual by remember { mutableStateOf<Penjual?>(null) }
-
-    val primaryColor = Color(0xFF8B1C31)
-    val backgroundColor = Color(0xFFF8F9FA)
-    val surfaceColor = Color(0xFFFFFFFF)
-    val textPrimary = Color(0xFF212121)
-
+fun ChatPenjualScreen(
+    onBack: () -> Unit = {},
+    initialPenjualId: Int? = null,
+    initialBarangNama: String? = null
+) {
     val daftarPenjual = remember {
         listOf(
             Penjual(1, "Bapak Budi (Pertanian)", "Stok jagung aman mas."),
@@ -67,6 +64,19 @@ fun ChatPenjualScreen(onBack: () -> Unit = {}) {
             Penjual(3, "Toko Tani Makmur", "Terima kasih sudah memesan pupuk di toko kami.")
         )
     }
+
+    var selectedPenjual by remember {
+        mutableStateOf(
+            if (initialPenjualId != null) {
+                daftarPenjual.find { it.id == initialPenjualId }
+            } else null
+        )
+    }
+
+    val primaryColor = Color(0xFF8B1C31)
+    val backgroundColor = Color(0xFFF8F9FA)
+    val surfaceColor = Color(0xFFFFFFFF)
+    val textPrimary = Color(0xFF212121)
 
     if (selectedPenjual == null) {
         Column(
@@ -123,7 +133,8 @@ fun ChatPenjualScreen(onBack: () -> Unit = {}) {
             backgroundColor = backgroundColor,
             surfaceColor = surfaceColor,
             textPrimary = textPrimary,
-            onBack = { selectedPenjual = null }
+            onBack = { selectedPenjual = null },
+            initialBarangNama = initialBarangNama
         )
     }
 }
@@ -191,16 +202,22 @@ fun RuangChatView(
     backgroundColor: Color,
     surfaceColor: Color,
     textPrimary: Color,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    initialBarangNama: String? = null
 ) {
     var messageText by remember { mutableStateOf("") }
 
     val messages = remember {
-        listOf(
-            ChatMessage("Halo, apakah sumber daya ini masih tersedia?", true),
-            ChatMessage("Halo kak! Iya, stoknya masih banyak.", false),
-            ChatMessage(penjual.pesanTerakhir, false)
-        )
+        val baseMessages = mutableListOf<ChatMessage>()
+        if (initialBarangNama != null) {
+            baseMessages.add(ChatMessage("Halo, apakah sumber daya $initialBarangNama ini masih tersedia?", true))
+            baseMessages.add(ChatMessage("Halo kak! Iya, $initialBarangNama masih tersedia dan stoknya masih banyak.", false))
+        } else {
+            baseMessages.add(ChatMessage("Halo, apakah sumber daya ini masih tersedia?", true))
+            baseMessages.add(ChatMessage("Halo kak! Iya, stoknya masih banyak.", false))
+        }
+        baseMessages.add(ChatMessage(penjual.pesanTerakhir, false))
+        baseMessages
     }
 
     Column(

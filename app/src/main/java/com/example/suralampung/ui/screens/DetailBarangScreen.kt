@@ -23,6 +23,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Button
@@ -61,6 +63,7 @@ import java.util.Locale
 fun DetailBarangScreen(
     barangNama: String?,
     onBack: () -> Unit,
+    onChatClick: (String) -> Unit = {},
     viewModel: DetailViewModel = viewModel()
 ) {
     val context = LocalContext.current
@@ -99,6 +102,9 @@ fun DetailBarangScreen(
     val localeId = Locale.forLanguageTag("id-ID")
     val formatRupiah = NumberFormat.getCurrencyInstance(localeId)
 
+    val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid
+    val isOwner = currentUserUid != null && currentBarang.id_penjual == currentUserUid
+
     Scaffold(
         bottomBar = {
             Surface(
@@ -114,7 +120,7 @@ fun DetailBarangScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text("Harga Total", color = Color.Gray, fontSize = 12.sp)
                         val hargaDouble = currentBarang.harga.toDouble()
                         Text(
@@ -124,45 +130,93 @@ fun DetailBarangScreen(
                             fontWeight = FontWeight.ExtraBold
                         )
                     }
-                    Button(
-                        onClick = {
-                            val uid = FirebaseAuth.getInstance().currentUser?.uid
-                            if (uid != null) {
-                                val cartItem = hashMapOf(
-                                    "id_barang" to currentBarang.nama,
-                                    "nama" to currentBarang.nama,
-                                    "harga" to currentBarang.harga,
-                                    "gambar" to currentBarang.image_url,
-                                    "jumlah" to 1
-                                )
+
+                    if (isOwner) {
+                        Button(
+                            onClick = {
                                 FirebaseFirestore.getInstance()
-                                    .collection("users")
-                                    .document(uid)
-                                    .collection("keranjang")
+                                    .collection("sumber_daya")
                                     .document(currentBarang.nama)
-                                    .set(cartItem)
+                                    .delete()
                                     .addOnSuccessListener {
-                                        Toast.makeText(context, "Berhasil masuk keranjang", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, "Produk berhasil dihapus", Toast.LENGTH_SHORT).show()
+                                        onBack()
                                     }
                                     .addOnFailureListener { e ->
-                                        Toast.makeText(context, "Gagal: ${e.message}", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, "Gagal menghapus: ${e.message}", Toast.LENGTH_SHORT).show()
                                     }
-                            } else {
-                                Toast.makeText(context, "Silakan login terlebih dahulu", Toast.LENGTH_SHORT).show()
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                            shape = RoundedCornerShape(16.dp),
+                            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 14.dp),
+                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Hapus", fontWeight = FontWeight.Bold)
+                        }
+                    } else {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(
+                                onClick = { onChatClick(currentBarang.nama) },
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .background(Color(0xFF25D366), RoundedCornerShape(16.dp))
+                            ) {
+                                Icon(
+                                    Icons.Default.Chat,
+                                    contentDescription = "Chat Penjual",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(24.dp)
+                                )
                             }
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8B1C31)),
-                        shape = RoundedCornerShape(16.dp),
-                        contentPadding = PaddingValues(horizontal = 28.dp, vertical = 14.dp),
-                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.ShoppingCart,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Tambah ke Keranjang", fontWeight = FontWeight.Bold)
+
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            Button(
+                                onClick = {
+                                    if (currentUserUid != null) {
+                                        val cartItem = hashMapOf(
+                                            "id_barang" to currentBarang.nama,
+                                            "nama" to currentBarang.nama,
+                                            "harga" to currentBarang.harga,
+                                            "gambar" to currentBarang.imageUrl,
+                                            "jumlah" to 1
+                                        )
+                                        FirebaseFirestore.getInstance()
+                                            .collection("users")
+                                            .document(currentUserUid)
+                                            .collection("keranjang")
+                                            .document(currentBarang.nama)
+                                            .set(cartItem)
+                                            .addOnSuccessListener {
+                                                Toast.makeText(context, "Berhasil masuk keranjang", Toast.LENGTH_SHORT).show()
+                                            }
+                                            .addOnFailureListener { e ->
+                                                Toast.makeText(context, "Gagal: ${e.message}", Toast.LENGTH_SHORT).show()
+                                            }
+                                    } else {
+                                        Toast.makeText(context, "Silakan login terlebih dahulu", Toast.LENGTH_SHORT).show()
+                                    }
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8B1C31)),
+                                shape = RoundedCornerShape(16.dp),
+                                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 14.dp),
+                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.ShoppingCart,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Beli", fontWeight = FontWeight.Bold)
+                            }
+                        }
                     }
                 }
             }
@@ -182,7 +236,7 @@ fun DetailBarangScreen(
             ) {
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
-                        .data(currentBarang.image_url)
+                        .data(currentBarang.imageUrl)
                         .crossfade(true)
                         .build(),
                     contentDescription = currentBarang.nama,
