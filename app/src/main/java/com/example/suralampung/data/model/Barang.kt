@@ -3,6 +3,8 @@ package com.example.suralampung.data.model
 import com.google.gson.annotations.SerializedName
 
 data class Barang(
+    val id: String = "",
+
     @SerializedName("nama")
     val nama: String = "",
 

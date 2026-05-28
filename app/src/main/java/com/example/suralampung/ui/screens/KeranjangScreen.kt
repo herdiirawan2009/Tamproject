@@ -107,7 +107,7 @@ fun ItemKeranjang(item: Map<String, Any>, onDelete: () -> Unit) {
 }
 
 @Composable
-fun KeranjangScreen(onBack: () -> Unit) {
+fun KeranjangScreen(onBack: () -> Unit, onCheckoutClick: () -> Unit) {
     val context = LocalContext.current
     var listKeranjang by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
@@ -247,11 +247,19 @@ fun KeranjangScreen(onBack: () -> Unit) {
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Button(
-                    onClick = { },
+                    onClick = {
+                        if (listKeranjang.isNotEmpty()) {
+                            onCheckoutClick()
+                        } else {
+                            Toast.makeText(context, "Keranjang kosong", Toast.LENGTH_SHORT).show()
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8B1C31)),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (listKeranjang.isNotEmpty()) Color(0xFF8B1C31) else Color.Gray
+                    ),
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Text(

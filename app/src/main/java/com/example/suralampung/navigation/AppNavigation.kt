@@ -7,6 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.suralampung.ui.screens.DetailBarangScreen
+import com.example.suralampung.ui.screens.DetailPesananScreen
 import com.example.suralampung.ui.screens.HasilPencarianScreen
 import com.example.suralampung.ui.screens.HomeScreen
 import com.example.suralampung.ui.screens.KeranjangScreen
@@ -105,6 +106,22 @@ fun AppNavigation(navController: NavHostController) {
             KeranjangScreen(
                 onBack = {
                     navController.popBackStack()
+                },
+                onCheckoutClick = {
+                    navController.navigate("detail_pesanan")
+                }
+            )
+        }
+
+        composable("detail_pesanan") {
+            DetailPesananScreen(
+                onBack = {
+                    navController.popBackStack()
+                },
+                onSuccess = {
+                    navController.navigate("riwayat") {
+                        popUpTo("home") { inclusive = false }
+                    }
                 }
             )
         }

@@ -31,6 +31,7 @@ class DetailViewModel : ViewModel() {
                 val doc = result.documents.firstOrNull()
                 if (doc != null) {
                     _barang.value = Barang(
+                        id = doc.id,
                         nama = doc.getString("nama") ?: "",
                         harga = (doc.getLong("harga") ?: 0L).toInt(),
                         lokasi = doc.getString("lokasi") ?: "",

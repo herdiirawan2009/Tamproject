@@ -135,8 +135,8 @@ fun DetailBarangScreen(
                         Button(
                             onClick = {
                                 FirebaseFirestore.getInstance()
-                                    .collection("sumber_daya")
-                                    .document(currentBarang.nama)
+                                    .collection("barang")
+                                    .document(currentBarang.id)
                                     .delete()
                                     .addOnSuccessListener {
                                         Toast.makeText(context, "Produk berhasil dihapus", Toast.LENGTH_SHORT).show()
