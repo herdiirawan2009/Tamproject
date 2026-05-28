@@ -16,6 +16,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -42,6 +43,7 @@ import com.example.suralampung.ui.theme.TextPrimary
 import com.example.suralampung.ui.theme.TextSecondary
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FieldValue
 
 @Composable
 fun RegisterScreen(navController: NavHostController) {
@@ -49,6 +51,7 @@ fun RegisterScreen(navController: NavHostController) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var konfirmasiPassword by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     Box(
@@ -134,51 +137,66 @@ fun RegisterScreen(navController: NavHostController) {
 
                     Button(
                         onClick = {
-                            if (email.isNotEmpty() && password.isNotEmpty() && nama.isNotEmpty() && password == konfirmasiPassword) {
-                                FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
-                                    .addOnCompleteListener { task ->
-                                        if (task.isSuccessful) {
-                                            val userId = task.result?.user?.uid
-                                            if (userId != null) {
-                                                val userMap = hashMapOf(
-                                                    "nama" to nama,
-                                                    "email" to email,
-                                                    "role" to "pembeli"
-                                                )
-
-                                                FirebaseFirestore.getInstance().collection("users").document(userId)
-                                                    .set(userMap)
-                                                    .addOnCompleteListener { firestoreTask ->
-                                                        if (firestoreTask.isSuccessful) {
-                                                            Toast.makeText(context, "Pendaftaran Berhasil", Toast.LENGTH_SHORT).show()
-                                                            navController.popBackStack()
-                                                        } else {
-                                                            Toast.makeText(context, "Gagal menyimpan data", Toast.LENGTH_SHORT).show()
-                                                        }
-                                                    }
-                                            }
-                                        } else {
-                                            Toast.makeText(context, "Gagal: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
-                                        }
-                                    }
-                            } else {
+                            if (nama.isEmpty() || email.isEmpty() || password.isEmpty()) {
                                 Toast.makeText(context, "Data tidak lengkap", Toast.LENGTH_SHORT).show()
+                                return@Button
                             }
+                            if (password != konfirmasiPassword) {
+                                Toast.makeText(context, "Password tidak cocok", Toast.LENGTH_SHORT).show()
+                                return@Button
+                            }
+
+                            isLoading = true
+                            FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
+                                .addOnCompleteListener { task ->
+                                    if (task.isSuccessful) {
+                                        val userId = task.result?.user?.uid
+                                        if (userId != null) {
+                                            val userMap = hashMapOf(
+                                                "nama" to nama,
+                                                "email" to email,
+                                                "created_at" to FieldValue.serverTimestamp()
+                                            )
+
+                                            FirebaseFirestore.getInstance().collection("users").document(userId)
+                                                .set(userMap)
+                                                .addOnCompleteListener { firestoreTask ->
+                                                    isLoading = false
+                                                    if (firestoreTask.isSuccessful) {
+                                                        Toast.makeText(context, "Pendaftaran Berhasil", Toast.LENGTH_SHORT).show()
+                                                        navController.navigate("home") {
+                                                            popUpTo("login") { inclusive = true }
+                                                        }
+                                                    } else {
+                                                        Toast.makeText(context, "Gagal menyimpan data", Toast.LENGTH_SHORT).show()
+                                                    }
+                                                }
+                                        }
+                                    } else {
+                                        isLoading = false
+                                        Toast.makeText(context, "Gagal: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
                         },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp),
+                        enabled = !isLoading,
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = PrimaryRed
                         )
                     ) {
-                        Text(
-                            text = "Daftar",
-                            color = Color.White,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.SemiBold
-                        )
+                        if (isLoading) {
+                            CircularProgressIndicator(color = Color.White)
+                        } else {
+                            Text(
+                                text = "Daftar",
+                                color = Color.White,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))

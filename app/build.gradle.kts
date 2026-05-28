@@ -44,8 +44,8 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation("androidx.compose.animation:animation")
 
-    // Versi 1.3.1 wajib dipakai untuk fitur PullToRefreshBox terbaru
     implementation("androidx.compose.material3:material3:1.3.1")
 
     implementation(libs.androidx.compose.material.icons.extended)
@@ -55,7 +55,6 @@ dependencies {
     implementation(libs.retrofit.gson)
     implementation(libs.coil.compose)
 
-    // Firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
@@ -67,5 +66,4 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-    implementation("io.coil-kt:coil-compose:2.6.0")
 }

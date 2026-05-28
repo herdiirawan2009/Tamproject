@@ -1,12 +1,10 @@
 package com.example.suralampung.viewmodel
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.suralampung.ui.screens.Barang
-import com.example.suralampung.data.network.RetrofitClient
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 
 class HomeViewModel : ViewModel() {
     private val _listBarang = MutableStateFlow<List<Barang>>(emptyList())
@@ -23,16 +21,25 @@ class HomeViewModel : ViewModel() {
     }
 
     fun fetchBarang() {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _isError.value = false
-            try {
-                _listBarang.value = RetrofitClient.instance.getBarang()
-            } catch (e: Exception) {
-                _isError.value = true
-            } finally {
+        _isLoading.value = true
+        _isError.value = false
+        FirebaseFirestore.getInstance().collection("barang").get()
+            .addOnSuccessListener { result ->
+                val list = result.mapNotNull { doc ->
+                    Barang(
+                        nama = doc.getString("nama") ?: "",
+                        harga = (doc.getLong("harga") ?: 0L).toInt(),
+                        lokasi = doc.getString("lokasi") ?: "",
+                        deskripsi = doc.getString("deskripsi") ?: "",
+                        image_url = doc.getString("image_url") ?: ""
+                    )
+                }
+                _listBarang.value = list
                 _isLoading.value = false
             }
-        }
+            .addOnFailureListener {
+                _isError.value = true
+                _isLoading.value = false
+            }
     }
 }

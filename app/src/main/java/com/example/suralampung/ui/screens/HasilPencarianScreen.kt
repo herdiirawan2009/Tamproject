@@ -1,19 +1,7 @@
 package com.example.suralampung.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -48,26 +36,48 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.example.suralampung.data.network.RetrofitClient
+import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
-fun HasilPencarianScreen(onItemClick: (String) -> Unit, onBack: () -> Unit) {
-
+fun HasilPencarianScreen(
+    kategori: String? = null,
+    onItemClick: (String) -> Unit,
+    onBack: () -> Unit
+) {
     var listBarang by remember { mutableStateOf<List<Barang>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var isError by remember { mutableStateOf(false) }
-
     var searchQuery by remember { mutableStateOf("") }
 
-    LaunchedEffect(Unit) {
-        try {
-            listBarang = RetrofitClient.instance.getBarang()
-            isLoading = false
-            isError = false
-        } catch (_: Exception) {
-            isLoading = false
-            isError = true
+    LaunchedEffect(kategori) {
+        isLoading = true
+        val db = FirebaseFirestore.getInstance()
+        val query = if (kategori != null) {
+            db.collection("barang").whereEqualTo("lokasi", kategori)
+        } else {
+            db.collection("barang")
         }
+
+        query.get()
+            .addOnSuccessListener { result ->
+                val list = result.mapNotNull { doc ->
+                    Barang(
+                        nama = doc.getString("nama") ?: "",
+                        harga = (doc.getLong("harga") ?: 0L).toInt(),
+                        lokasi = doc.getString("lokasi") ?: "",
+                        deskripsi = doc.getString("deskripsi") ?: "",
+                        image_url = doc.getString("image_url") ?: "",
+                        kategori = doc.getString("kategori") ?: ""
+                    )
+                }
+                listBarang = list
+                isLoading = false
+                isError = false
+            }
+            .addOnFailureListener {
+                isLoading = false
+                isError = true
+            }
     }
 
     val filteredList = listBarang.filter {
@@ -103,7 +113,7 @@ fun HasilPencarianScreen(onItemClick: (String) -> Unit, onBack: () -> Unit) {
             Spacer(modifier = Modifier.width(16.dp))
 
             Text(
-                text = "Pencarian",
+                text = if (kategori != null) kategori else "Pencarian",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = Color(0xFF212121)
@@ -161,7 +171,7 @@ fun HasilPencarianScreen(onItemClick: (String) -> Unit, onBack: () -> Unit) {
             }
         } else if (filteredList.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Barang tidak ditemukan", color = Color.Gray, fontWeight = FontWeight.Medium)
+                Text("Data tidak ditemukan", color = Color.Gray, fontWeight = FontWeight.Medium)
             }
         } else {
             LazyColumn(

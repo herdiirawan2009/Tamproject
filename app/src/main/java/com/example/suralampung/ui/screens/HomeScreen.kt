@@ -1,6 +1,7 @@
 package com.example.suralampung.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +21,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.LocationOn
@@ -34,6 +36,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -68,6 +71,8 @@ fun HomeScreen(
     onChatClick: () -> Unit = {},
     onSeeAllClick: () -> Unit,
     onDetailClick: (String) -> Unit = {},
+    onAddClick: () -> Unit = {},
+    onKategoriClick: (String) -> Unit = {},
     viewModel: HomeViewModel = viewModel()
 ) {
     val daftarKategori = listOf(
@@ -84,71 +89,74 @@ fun HomeScreen(
 
     val pullRefreshState = rememberPullToRefreshState()
 
-    PullToRefreshBox(
-        isRefreshing = isRefreshing,
-        onRefresh = {
-            isRefreshing = true
-            viewModel.fetchBarang()
-            isRefreshing = false
-        },
-        state = pullRefreshState,
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF8F9FA))
-    ) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize()
+    Scaffold { padding ->
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = {
+                isRefreshing = true
+                viewModel.fetchBarang()
+                isRefreshing = false
+            },
+            state = pullRefreshState,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .background(Color(0xFFF8F9FA))
         ) {
-            item {
-                HeaderHome(onProfileClick = onProfileClick)
-
-                QuickMenu(
-                    onHistoryClick = onHistoryClick,
-                    onCartClick = onCartClick,
-                    onChatClick = onChatClick,
-                    onSeeAllClick = onSeeAllClick
-                )
-
-                SearchBarDummy()
-                BannerPromo(onSeeAllClick = onSeeAllClick)
-                SectionTitle("Kategori")
-                KategoriRow(daftarKategori)
-                SectionTitle("Rekomendasi")
-            }
-
-            if (isLoading && !isRefreshing) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize()
+            ) {
                 item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(32.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(color = Color(0xFF8B1C31))
+                    HeaderHome(onProfileClick = onProfileClick)
+
+                    QuickMenu(
+                        onHistoryClick = onHistoryClick,
+                        onCartClick = onCartClick,
+                        onChatClick = onChatClick,
+                        onAddClick = onAddClick
+                    )
+
+                    SearchBarDummy(onClick = onSeeAllClick)
+                    BannerPromo(onSeeAllClick = onSeeAllClick)
+                    SectionTitle("Kategori")
+                    KategoriRow(daftarKategori, onKategoriClick)
+                    SectionTitle("Rekomendasi")
+                }
+
+                if (isLoading && !isRefreshing) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = Color(0xFF8B1C31))
+                        }
+                    }
+                } else if (isError || listBarang.isEmpty()) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                "Gagal memuat data. Tarik ke bawah untuk memuat ulang.",
+                                color = Color.Red,
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+                } else {
+                    items(listBarang) { item ->
+                        CardProduk(item = item, onDetailClick = { onDetailClick(item.nama) })
                     }
                 }
-            } else if (isError || listBarang.isEmpty()) {
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(32.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            "Gagal memuat data. Tarik ke bawah untuk memuat ulang.",
-                            color = Color.Red,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 14.sp
-                        )
-                    }
-                }
-            } else {
-                items(listBarang) { item ->
-                    CardProduk(item = item, onDetailClick = { onDetailClick(item.nama) })
-                }
+                item { Spacer(modifier = Modifier.height(24.dp)) }
             }
-            item { Spacer(modifier = Modifier.height(24.dp)) }
         }
     }
 }
@@ -158,7 +166,7 @@ fun QuickMenu(
     onHistoryClick: () -> Unit,
     onCartClick: () -> Unit,
     onChatClick: () -> Unit,
-    onSeeAllClick: () -> Unit
+    onAddClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -170,7 +178,7 @@ fun QuickMenu(
         MenuIcon(Icons.Default.History, "Riwayat", onHistoryClick)
         MenuIcon(Icons.Default.ShoppingCart, "Keranjang", onCartClick)
         MenuIcon(Icons.Default.Email, "Chat", onChatClick)
-        MenuIcon(Icons.Default.Search, "Cari", onSeeAllClick)
+        MenuIcon(Icons.Default.Add, "Tambah", onAddClick)
     }
 }
 
@@ -262,15 +270,17 @@ fun HeaderHome(onProfileClick: () -> Unit) {
 }
 
 @Composable
-fun SearchBarDummy() {
+fun SearchBarDummy(onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 8.dp)
             .shadow(2.dp, RoundedCornerShape(16.dp))
             .background(Color.White, RoundedCornerShape(16.dp))
+            .clickable { onClick() }
             .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
     ) {
         Icon(
             imageVector = Icons.Default.Search,
@@ -334,7 +344,7 @@ fun SectionTitle(judul: String) {
 }
 
 @Composable
-fun KategoriRow(list: List<Kategori>) {
+fun KategoriRow(list: List<Kategori>, onKategoriClick: (String) -> Unit) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = 20.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -343,7 +353,8 @@ fun KategoriRow(list: List<Kategori>) {
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+                modifier = Modifier.clickable { onKategoriClick(kategori.nama) }
             ) {
                 Text(
                     text = kategori.nama,

@@ -12,5 +12,7 @@ data class Barang(
     @SerializedName("deskripsi")
     val deskripsi: String,
     @SerializedName("image_url")
-    val image_url: String
+    val image_url: String,
+    @SerializedName("kategori")
+    val kategori: String = ""
 )

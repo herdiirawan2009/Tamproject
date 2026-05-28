@@ -17,6 +17,7 @@ import com.example.suralampung.ui.screens.RegisterScreen
 import com.example.suralampung.ui.screens.RiwayatScreen
 import com.example.suralampung.ui.screens.SplashScreen
 import com.example.suralampung.ui.screens.ChatPenjualScreen
+import com.example.suralampung.ui.screens.TambahSumberDayaScreen
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
@@ -50,12 +51,30 @@ fun AppNavigation(navController: NavHostController) {
                 onProfileClick = { navController.navigate("profil") },
                 onChatClick = { navController.navigate("chat") },
                 onSeeAllClick = { navController.navigate("search") },
-                onDetailClick = { nama -> navController.navigate("detail/$nama") }
+                onDetailClick = { nama -> navController.navigate("detail/$nama") },
+                onAddClick = { navController.navigate("tambah_sumber_daya") },
+                onKategoriClick = { kategori -> navController.navigate("hasil_pencarian/$kategori") }
             )
         }
 
         composable("search") {
             HasilPencarianScreen(
+                onItemClick = { nama ->
+                    navController.navigate("detail/$nama")
+                },
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(
+            route = "hasil_pencarian/{kategori}",
+            arguments = listOf(navArgument("kategori") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val kategori = backStackEntry.arguments?.getString("kategori")
+            HasilPencarianScreen(
+                kategori = kategori,
                 onItemClick = { nama ->
                     navController.navigate("detail/$nama")
                 },
@@ -109,6 +128,14 @@ fun AppNavigation(navController: NavHostController) {
 
         composable("chat") {
             ChatPenjualScreen(
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable("tambah_sumber_daya") {
+            TambahSumberDayaScreen(
                 onBack = {
                     navController.popBackStack()
                 }

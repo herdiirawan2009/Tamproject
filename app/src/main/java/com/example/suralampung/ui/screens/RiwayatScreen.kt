@@ -47,7 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.example.suralampung.data.network.RetrofitClient
+import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
 fun ItemRiwayat(barang: Barang, status: String) {
@@ -165,13 +165,24 @@ fun RiwayatScreen(onBack: () -> Unit) {
     var isError by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        try {
-            listRiwayat = RetrofitClient.instance.getBarang()
-            isLoading = false
-        } catch (_: Exception) {
-            isError = true
-            isLoading = false
-        }
+        FirebaseFirestore.getInstance().collection("barang").get()
+            .addOnSuccessListener { result ->
+                val list = result.mapNotNull { doc ->
+                    Barang(
+                        nama = doc.getString("nama") ?: "",
+                        harga = (doc.getLong("harga") ?: 0L).toInt(),
+                        lokasi = doc.getString("lokasi") ?: "",
+                        deskripsi = doc.getString("deskripsi") ?: "",
+                        image_url = doc.getString("image_url") ?: ""
+                    )
+                }
+                listRiwayat = list
+                isLoading = false
+            }
+            .addOnFailureListener {
+                isError = true
+                isLoading = false
+            }
     }
 
     Column(

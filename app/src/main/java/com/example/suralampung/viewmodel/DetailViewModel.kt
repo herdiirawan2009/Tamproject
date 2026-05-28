@@ -1,12 +1,10 @@
 package com.example.suralampung.viewmodel
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.suralampung.ui.screens.Barang
-import com.example.suralampung.data.network.RetrofitClient
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 
 class DetailViewModel : ViewModel() {
     private val _barang = MutableStateFlow<Barang?>(null)
@@ -24,19 +22,30 @@ class DetailViewModel : ViewModel() {
             _isError.value = true
             return
         }
-        
-        viewModelScope.launch {
-            _isLoading.value = true
-            try {
-                val list = RetrofitClient.instance.getBarang()
-                val found = list.find { it.nama == barangNama }
-                _barang.value = found
-                _isError.value = found == null
-            } catch (e: Exception) {
-                _isError.value = true
-            } finally {
+
+        _isLoading.value = true
+        _isError.value = false
+        FirebaseFirestore.getInstance().collection("barang")
+            .whereEqualTo("nama", barangNama).get()
+            .addOnSuccessListener { result ->
+                val doc = result.documents.firstOrNull()
+                if (doc != null) {
+                    _barang.value = Barang(
+                        nama = doc.getString("nama") ?: "",
+                        harga = (doc.getLong("harga") ?: 0L).toInt(),
+                        lokasi = doc.getString("lokasi") ?: "",
+                        deskripsi = doc.getString("deskripsi") ?: "",
+                        image_url = doc.getString("image_url") ?: ""
+                    )
+                    _isError.value = false
+                } else {
+                    _isError.value = true
+                }
                 _isLoading.value = false
             }
-        }
+            .addOnFailureListener {
+                _isError.value = true
+                _isLoading.value = false
+            }
     }
 }
