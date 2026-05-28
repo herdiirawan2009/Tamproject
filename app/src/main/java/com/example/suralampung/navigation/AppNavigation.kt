@@ -6,7 +6,6 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-
 import com.example.suralampung.ui.screens.DetailBarangScreen
 import com.example.suralampung.ui.screens.HasilPencarianScreen
 import com.example.suralampung.ui.screens.HomeScreen
@@ -18,6 +17,8 @@ import com.example.suralampung.ui.screens.RiwayatScreen
 import com.example.suralampung.ui.screens.SplashScreen
 import com.example.suralampung.ui.screens.ChatPenjualScreen
 import com.example.suralampung.ui.screens.TambahSumberDayaScreen
+import com.example.suralampung.ui.screens.PengaturanScreen
+import com.example.suralampung.ui.screens.PusatBantuanScreen
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
@@ -122,6 +123,12 @@ fun AppNavigation(navController: NavHostController) {
                 },
                 onBack = {
                     navController.popBackStack()
+                },
+                onPengaturanClick = {
+                    navController.navigate("pengaturan")
+                },
+                onBantuanClick = {
+                    navController.navigate("pusat_bantuan")
                 }
             )
         }
@@ -136,6 +143,22 @@ fun AppNavigation(navController: NavHostController) {
 
         composable("tambah_sumber_daya") {
             TambahSumberDayaScreen(
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable("pengaturan") {
+            PengaturanScreen(
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable("pusat_bantuan") {
+            PusatBantuanScreen(
                 onBack = {
                     navController.popBackStack()
                 }

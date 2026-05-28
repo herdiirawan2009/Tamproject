@@ -1,5 +1,6 @@
 package com.example.suralampung.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -26,6 +27,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.KeyboardArrowRight
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -33,7 +35,9 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -46,6 +50,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -53,24 +58,91 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
-fun ProfilScreen(onLogout: () -> Unit = {}, onBack: () -> Unit = {}) {
+fun ProfilScreen(
+    onLogout: () -> Unit = {},
+    onBack: () -> Unit = {},
+    onPengaturanClick: () -> Unit = {},
+    onBantuanClick: () -> Unit = {}
+) {
     var nama by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
-    var role by remember { mutableStateOf("") }
+
+    // State untuk fitur Edit Profil
+    var showEditDialog by remember { mutableStateOf(false) }
+    var editNama by remember { mutableStateOf("") }
+    var isLoadingUpdate by remember { mutableStateOf(false) }
 
     val currentUser = FirebaseAuth.getInstance().currentUser
+    val firestore = FirebaseFirestore.getInstance()
 
+    // Konteks untuk memunculkan Toast saat menu diklik
+    val context = LocalContext.current
+
+    // Ambil data user dari Firestore (hanya nama dan email)
     LaunchedEffect(Unit) {
         currentUser?.uid?.let { uid ->
-            FirebaseFirestore.getInstance().collection("users").document(uid).get()
+            firestore.collection("users").document(uid).get()
                 .addOnSuccessListener { document ->
                     if (document != null) {
                         nama = document.getString("nama") ?: ""
                         email = document.getString("email") ?: ""
-                        role = document.getString("role") ?: ""
                     }
                 }
         }
+    }
+
+    // Tampilan Dialog Edit Profil
+    if (showEditDialog) {
+        AlertDialog(
+            onDismissRequest = { showEditDialog = false },
+            title = {
+                Text(text = "Edit Profil", fontWeight = FontWeight.Bold)
+            },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = editNama,
+                        onValueChange = { editNama = it },
+                        label = { Text("Nama Lengkap") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        isLoadingUpdate = true
+                        currentUser?.uid?.let { uid ->
+                            // Update ke Firestore
+                            firestore.collection("users").document(uid)
+                                .update("nama", editNama)
+                                .addOnSuccessListener {
+                                    nama = editNama // Update state lokal
+                                    isLoadingUpdate = false
+                                    showEditDialog = false
+                                    Toast.makeText(context, "Profil berhasil diperbarui", Toast.LENGTH_SHORT).show()
+                                }
+                                .addOnFailureListener {
+                                    isLoadingUpdate = false
+                                    Toast.makeText(context, "Gagal memperbarui profil", Toast.LENGTH_SHORT).show()
+                                }
+                        }
+                    },
+                    enabled = !isLoadingUpdate && editNama.isNotBlank()
+                ) {
+                    Text(if (isLoadingUpdate) "Menyimpan..." else "Simpan")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showEditDialog = false },
+                    enabled = !isLoadingUpdate
+                ) {
+                    Text("Batal", color = Color.Gray)
+                }
+            }
+        )
     }
 
     Column(
@@ -156,21 +228,7 @@ fun ProfilScreen(onLogout: () -> Unit = {}, onBack: () -> Unit = {}) {
                         color = Color.Gray,
                         fontWeight = FontWeight.Medium
                     )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Box(
-                        modifier = Modifier
-                            .background(Color(0xFFFFB300).copy(alpha = 0.2f), shape = RoundedCornerShape(16.dp))
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
-                    ) {
-                        Text(
-                            text = if (role == "pembeli") "Rakyat / Pembeli" else role,
-                            color = Color(0xFF5C101F),
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                    // Bagian teks Role dihapus dari sini
                 }
             }
 
@@ -193,11 +251,26 @@ fun ProfilScreen(onLogout: () -> Unit = {}, onBack: () -> Unit = {}) {
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Column {
-                    MenuItem(icon = Icons.Default.AccountCircle, title = "Edit Profil")
+                    MenuItem(
+                        icon = Icons.Default.AccountCircle,
+                        title = "Edit Profil",
+                        onClick = {
+                            editNama = nama
+                            showEditDialog = true
+                        }
+                    )
                     HorizontalDivider(color = Color(0xFFF8F9FA), thickness = 2.dp)
-                    MenuItem(icon = Icons.Default.Settings, title = "Pengaturan")
+                    MenuItem(
+                        icon = Icons.Default.Settings,
+                        title = "Pengaturan",
+                        onClick = onPengaturanClick
+                    )
                     HorizontalDivider(color = Color(0xFFF8F9FA), thickness = 2.dp)
-                    MenuItem(icon = Icons.Default.Info, title = "Pusat Bantuan")
+                    MenuItem(
+                        icon = Icons.Default.Info,
+                        title = "Pusat Bantuan",
+                        onClick = onBantuanClick
+                    )
                 }
             }
 
@@ -247,11 +320,11 @@ fun ProfilScreen(onLogout: () -> Unit = {}, onBack: () -> Unit = {}) {
 }
 
 @Composable
-fun MenuItem(icon: ImageVector, title: String) {
+fun MenuItem(icon: ImageVector, title: String, onClick: () -> Unit = {}) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { }
+            .clickable { onClick() }
             .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
