@@ -54,7 +54,7 @@ fun HasilPencarianScreen(
         isLoading = true
         val db = FirebaseFirestore.getInstance()
         val query = if (kategori != null) {
-            db.collection("barang").whereEqualTo("lokasi", kategori)
+            db.collection("barang").whereEqualTo("kategori", kategori)
         } else {
             db.collection("barang")
         }
@@ -168,7 +168,7 @@ fun HasilPencarianScreen(
             }
         } else if (isError) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Gagal memuat data", color = Color.Red, fontWeight = FontWeight.Medium)
+                Text("Koneksi gagal, silakan coba lagi", color = Color.Red, fontWeight = FontWeight.Medium)
             }
         } else if (filteredList.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

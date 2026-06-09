@@ -384,6 +384,7 @@ fun CardProduk(item: Barang, onDetailClick: () -> Unit) {
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            android.util.Log.d("CEK_URL", "URL Gambar untuk ${item.nama}: ${item.imageUrl}")
             AsyncImage(
                 model = item.imageUrl,
                 contentDescription = item.nama,

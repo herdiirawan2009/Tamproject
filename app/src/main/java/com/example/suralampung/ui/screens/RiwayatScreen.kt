@@ -39,7 +39,7 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -201,20 +202,24 @@ fun RiwayatScreen(onBack: () -> Unit) {
     var tabIndex by remember { mutableIntStateOf(0) }
     val tabs = listOf("Sedang Diproses", "Selesai")
 
-    var listSemuaRiwayat by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
+    var listDitampilkan by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var isError by remember { mutableStateOf(false) }
 
     var selectedItemForDetail by remember { mutableStateOf<Map<String, Any>?>(null) }
     var selectedItemForConfirmation by remember { mutableStateOf<Map<String, Any>?>(null) }
 
-    LaunchedEffect(Unit) {
+    DisposableEffect(tabIndex) {
         val uid = FirebaseAuth.getInstance().currentUser?.uid
-        if (uid != null) {
+        val status = if (tabIndex == 0) "Diproses" else "Selesai"
+        val registration = if (uid != null) {
+            isLoading = true
             FirebaseFirestore.getInstance()
                 .collection("users")
                 .document(uid)
                 .collection("riwayat")
+                .whereEqualTo("status", status)
+                .orderBy("tanggal", Query.Direction.DESCENDING)
                 .addSnapshotListener { snapshot, e ->
                     if (e != null) {
                         isError = true
@@ -222,25 +227,24 @@ fun RiwayatScreen(onBack: () -> Unit) {
                         return@addSnapshotListener
                     }
                     if (snapshot != null) {
-                        listSemuaRiwayat = snapshot.documents.map { doc ->
+                        listDitampilkan = snapshot.documents.map { doc ->
                             val data = doc.data?.toMutableMap() ?: mutableMapOf()
                             data["docId"] = doc.id
                             data
                         }
                         isLoading = false
+                        isError = false
                     }
                 }
         } else {
             isLoading = false
             isError = true
+            null
+        }
+        onDispose {
+            registration?.remove()
         }
     }
-
-    val listDitampilkan = if (tabIndex == 0) {
-        listSemuaRiwayat.filter { it["status"]?.toString() == "Diproses" }
-    } else {
-        listSemuaRiwayat.filter { it["status"]?.toString() == "Selesai" }
-    }.sortedByDescending { it["tanggal"] as? Long ?: 0L }
 
     val formatRupiah = NumberFormat.getInstance(Locale("id", "ID"))
     val sdf = SimpleDateFormat("dd MMMM yyyy, HH:mm", Locale("id", "ID"))
@@ -516,7 +520,7 @@ fun RiwayatScreen(onBack: () -> Unit) {
                 }
             } else if (isError) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Gagal memuat riwayat", color = Color.Red)
+                    Text("Koneksi gagal, silakan coba lagi", color = Color.Red)
                 }
             } else if (listDitampilkan.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

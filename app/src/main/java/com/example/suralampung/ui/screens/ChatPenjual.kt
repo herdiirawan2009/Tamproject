@@ -34,7 +34,9 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -47,9 +49,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 
 data class Penjual(val id: Int, val nama: String, val pesanTerakhir: String)
-data class ChatMessage(val text: String, val isFromMe: Boolean)
+data class Pesan(val teks: String, val dariUser: Boolean)
 
 @Composable
 fun ChatPenjualScreen(
@@ -206,18 +209,24 @@ fun RuangChatView(
     initialBarangNama: String? = null
 ) {
     var messageText by remember { mutableStateOf("") }
-
+    var sudahDibalas by remember { mutableStateOf(false) }
     val messages = remember {
-        val baseMessages = mutableListOf<ChatMessage>()
-        if (initialBarangNama != null) {
-            baseMessages.add(ChatMessage("Halo, apakah sumber daya $initialBarangNama ini masih tersedia?", true))
-            baseMessages.add(ChatMessage("Halo kak! Iya, $initialBarangNama masih tersedia dan stoknya masih banyak.", false))
-        } else {
-            baseMessages.add(ChatMessage("Halo, apakah sumber daya ini masih tersedia?", true))
-            baseMessages.add(ChatMessage("Halo kak! Iya, stoknya masih banyak.", false))
+        mutableStateListOf<Pesan>().apply {
+            if (initialBarangNama != null) {
+                add(Pesan("Halo kak! Iya, $initialBarangNama masih tersedia dan stoknya masih banyak.", false))
+            } else {
+                add(Pesan("Halo kak! Iya, stoknya masih banyak.", false))
+            }
+            add(Pesan("Ada yang bisa saya bantu?", false))
         }
-        baseMessages.add(ChatMessage(penjual.pesanTerakhir, false))
-        baseMessages
+    }
+
+    LaunchedEffect(messages.size) {
+        if (messages.isNotEmpty() && messages.last().dariUser && !sudahDibalas) {
+            delay(1500)
+            messages.add(Pesan("Halo! Ya, barangnya ready. Ada yang bisa saya bantu?", false))
+            sudahDibalas = true
+        }
     }
 
     Column(
@@ -332,7 +341,12 @@ fun RuangChatView(
                 Spacer(modifier = Modifier.width(12.dp))
 
                 IconButton(
-                    onClick = { },
+                    onClick = {
+                        if (messageText.isNotBlank()) {
+                            messages.add(Pesan(messageText, true))
+                            messageText = ""
+                        }
+                    },
                     modifier = Modifier
                         .size(52.dp)
                         .background(primaryColor, CircleShape)
@@ -350,34 +364,34 @@ fun RuangChatView(
 }
 
 @Composable
-fun ChatBubble(message: ChatMessage, primaryColor: Color, surfaceColor: Color, textPrimary: Color) {
+fun ChatBubble(message: Pesan, primaryColor: Color, surfaceColor: Color, textPrimary: Color) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = if (message.isFromMe) Arrangement.End else Arrangement.Start
+        horizontalArrangement = if (message.dariUser) Arrangement.End else Arrangement.Start
     ) {
         Box(
             modifier = Modifier
                 .shadow(2.dp, RoundedCornerShape(
                     topStart = 16.dp,
                     topEnd = 16.dp,
-                    bottomStart = if (message.isFromMe) 16.dp else 4.dp,
-                    bottomEnd = if (message.isFromMe) 4.dp else 16.dp
+                    bottomStart = if (message.dariUser) 16.dp else 4.dp,
+                    bottomEnd = if (message.dariUser) 4.dp else 16.dp
                 ))
                 .background(
-                    color = if (message.isFromMe) primaryColor else surfaceColor,
+                    color = if (message.dariUser) primaryColor else surfaceColor,
                     shape = RoundedCornerShape(
                         topStart = 16.dp,
                         topEnd = 16.dp,
-                        bottomStart = if (message.isFromMe) 16.dp else 4.dp,
-                        bottomEnd = if (message.isFromMe) 4.dp else 16.dp
+                        bottomStart = if (message.dariUser) 16.dp else 4.dp,
+                        bottomEnd = if (message.dariUser) 4.dp else 16.dp
                     )
                 )
                 .padding(horizontal = 16.dp, vertical = 12.dp)
                 .widthIn(max = 280.dp)
         ) {
             Text(
-                text = message.text,
-                color = if (message.isFromMe) Color.White else textPrimary,
+                text = message.teks,
+                color = if (message.dariUser) Color.White else textPrimary,
                 fontSize = 15.sp,
                 lineHeight = 22.sp
             )

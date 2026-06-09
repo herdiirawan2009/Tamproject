@@ -178,7 +178,9 @@ fun LoginScreen(navController: NavHostController) {
                                 FirebaseAuth.getInstance().signInWithEmailAndPassword(email, password)
                                     .addOnCompleteListener { task ->
                                         if (task.isSuccessful) {
-                                            navController.navigate("home")
+                                            navController.navigate("home") {
+                                                popUpTo("login") { inclusive = true }
+                                            }
                                         } else {
                                             Toast.makeText(context, "Gagal Login", Toast.LENGTH_SHORT).show()
                                         }

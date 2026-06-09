@@ -78,7 +78,15 @@ import java.io.InputStream
 fun uriToBase64(contentResolver: ContentResolver, uri: Uri): String? {
     return try {
         val inputStream: InputStream? = contentResolver.openInputStream(uri)
-        val bitmap = BitmapFactory.decodeStream(inputStream)
+        val originalBitmap = BitmapFactory.decodeStream(inputStream)
+        val width = originalBitmap.width
+        val height = originalBitmap.height
+        val bitmap = if (width > 800) {
+            val newHeight = (800.toDouble() / width * height).toInt()
+            Bitmap.createScaledBitmap(originalBitmap, 800, newHeight, true)
+        } else {
+            originalBitmap
+        }
         val outputStream = ByteArrayOutputStream()
         bitmap.compress(Bitmap.CompressFormat.JPEG, 70, outputStream)
         val bytes = outputStream.toByteArray()
@@ -366,11 +374,11 @@ fun TambahSumberDayaScreen(onBack: () -> Unit = {}) {
                                             onBack()
                                         }
                                         .addOnFailureListener {
-                                            Toast.makeText(context, "Gagal simpan ke Firestore", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, "Koneksi gagal, silakan coba lagi", Toast.LENGTH_SHORT).show()
                                         }
                                 }
                             } catch (e: Exception) {
-                                Toast.makeText(context, "Terjadi kesalahan: ${e.message}", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Koneksi gagal, silakan coba lagi", Toast.LENGTH_SHORT).show()
                             } finally {
                                 isLoading = false
                             }
