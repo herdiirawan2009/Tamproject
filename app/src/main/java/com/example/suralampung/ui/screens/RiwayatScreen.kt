@@ -58,7 +58,6 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -219,7 +218,6 @@ fun RiwayatScreen(onBack: () -> Unit) {
                 .document(uid)
                 .collection("riwayat")
                 .whereEqualTo("status", status)
-                .orderBy("tanggal", Query.Direction.DESCENDING)
                 .addSnapshotListener { snapshot, e ->
                     if (e != null) {
                         isError = true
@@ -231,7 +229,7 @@ fun RiwayatScreen(onBack: () -> Unit) {
                             val data = doc.data?.toMutableMap() ?: mutableMapOf()
                             data["docId"] = doc.id
                             data
-                        }
+                        }.sortedByDescending { it["tanggal"] as? Long ?: 0L }
                         isLoading = false
                         isError = false
                     }
