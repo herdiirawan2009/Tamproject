@@ -1,5 +1,7 @@
 package com.example.suralampung.navigation
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -26,7 +28,11 @@ import com.google.firebase.auth.FirebaseAuth
 fun AppNavigation(navController: NavHostController) {
     NavHost(
         navController = navController,
-        startDestination = "login"
+        startDestination = "login",
+        enterTransition = { EnterTransition.None },
+        exitTransition = { ExitTransition.None },
+        popEnterTransition = { EnterTransition.None },
+        popExitTransition = { ExitTransition.None }
     ) {
         composable("splash") {
             SplashScreen(
