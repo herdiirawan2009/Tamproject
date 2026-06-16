@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -29,7 +28,6 @@ import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.KeyboardArrowRight
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -66,19 +64,15 @@ fun ProfilScreen(
 ) {
     var nama by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
-
-    // State untuk fitur Edit Profil
     var showEditDialog by remember { mutableStateOf(false) }
     var editNama by remember { mutableStateOf("") }
     var isLoadingUpdate by remember { mutableStateOf(false) }
+    var showLogoutDialog by remember { mutableStateOf(false) }
 
     val currentUser = FirebaseAuth.getInstance().currentUser
     val firestore = FirebaseFirestore.getInstance()
-
-    // Konteks untuk memunculkan Toast saat menu diklik
     val context = LocalContext.current
 
-    // Ambil data user dari Firestore (hanya nama dan email)
     LaunchedEffect(Unit) {
         currentUser?.uid?.let { uid ->
             firestore.collection("users").document(uid).get()
@@ -91,7 +85,6 @@ fun ProfilScreen(
         }
     }
 
-    // Tampilan Dialog Edit Profil
     if (showEditDialog) {
         AlertDialog(
             onDismissRequest = { showEditDialog = false },
@@ -114,11 +107,10 @@ fun ProfilScreen(
                     onClick = {
                         isLoadingUpdate = true
                         currentUser?.uid?.let { uid ->
-                            // Update ke Firestore
                             firestore.collection("users").document(uid)
                                 .update("nama", editNama)
                                 .addOnSuccessListener {
-                                    nama = editNama // Update state lokal
+                                    nama = editNama
                                     isLoadingUpdate = false
                                     showEditDialog = false
                                     Toast.makeText(context, "Profil berhasil diperbarui", Toast.LENGTH_SHORT).show()
@@ -145,6 +137,37 @@ fun ProfilScreen(
         )
     }
 
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            containerColor = Color.White,
+            title = {
+                Text(text = "Keluar Akun", fontWeight = FontWeight.Bold, color = Color(0xFF212121))
+            },
+            text = {
+                Text("Apakah kamu yakin ingin keluar dari akun ini?", color = Color.Gray)
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showLogoutDialog = false
+                        FirebaseAuth.getInstance().signOut()
+                        onLogout()
+                    }
+                ) {
+                    Text("Yakin", color = Color(0xFF8B1C31), fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showLogoutDialog = false }
+                ) {
+                    Text("Batal", color = Color.Gray)
+                }
+            }
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -152,7 +175,7 @@ fun ProfilScreen(
     ) {
         Column(
             modifier = Modifier
-                .weight(1f)
+                .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
             Row(
@@ -228,7 +251,6 @@ fun ProfilScreen(
                         color = Color.Gray,
                         fontWeight = FontWeight.Medium
                     )
-                    // Bagian teks Role dihapus dari sini
                 }
             }
 
@@ -274,53 +296,44 @@ fun ProfilScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
-        }
+            Spacer(modifier = Modifier.height(16.dp))
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .shadow(elevation = 16.dp, shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
-                .background(Color.White, RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
-                .navigationBarsPadding()
-                .padding(24.dp)
-        ) {
-            Button(
-                onClick = {
-                    FirebaseAuth.getInstance().signOut()
-                    onLogout()
-                },
+            Text(
+                text = "Tindakan Akun",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Gray,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+            )
+
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8B1C31)),
-                shape = RoundedCornerShape(16.dp)
+                    .padding(horizontal = 20.dp),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ExitToApp,
-                        contentDescription = "Logout",
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "Keluar dari Akun",
-                        color = Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                MenuItem(
+                    icon = Icons.Default.ExitToApp,
+                    title = "Keluar dari Akun",
+                    textColor = Color(0xFF8B1C31),
+                    onClick = { showLogoutDialog = true }
+                )
             }
+
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
 
 @Composable
-fun MenuItem(icon: ImageVector, title: String, onClick: () -> Unit = {}) {
+fun MenuItem(
+    icon: ImageVector,
+    title: String,
+    textColor: Color = Color(0xFF212121),
+    onClick: () -> Unit = {}
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -347,7 +360,7 @@ fun MenuItem(icon: ImageVector, title: String, onClick: () -> Unit = {}) {
             Text(
                 text = title,
                 fontSize = 16.sp,
-                color = Color(0xFF212121),
+                color = textColor,
                 fontWeight = FontWeight.Bold
             )
         }
