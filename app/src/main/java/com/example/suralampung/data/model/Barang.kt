@@ -20,7 +20,6 @@ data class Barang(
     @SerializedName("image_url")
     val imageUrl: String = "",
 
-    // Tambahan wajib untuk fitur Hapus Produk / Chat Penjual
     @SerializedName("id_penjual")
     val id_penjual: String = "",
 

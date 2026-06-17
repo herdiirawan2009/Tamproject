@@ -26,6 +26,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -53,7 +54,11 @@ import java.text.NumberFormat
 import java.util.Locale
 
 @Composable
-fun ItemKeranjang(item: Map<String, Any>, onDelete: () -> Unit) {
+fun ItemKeranjang(
+    item: Map<String, Any>,
+    isChecked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    onDelete: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -65,7 +70,12 @@ fun ItemKeranjang(item: Map<String, Any>, onDelete: () -> Unit) {
         Row(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
-        ) {
+        )
+        {
+            Checkbox(
+                checked = isChecked,
+                onCheckedChange = onCheckedChange
+            )
             AsyncImage(
                 model = item["gambar"]?.toString() ?: "",
                 contentDescription = item["nama"]?.toString() ?: "",
@@ -107,9 +117,10 @@ fun ItemKeranjang(item: Map<String, Any>, onDelete: () -> Unit) {
 }
 
 @Composable
-fun KeranjangScreen(onBack: () -> Unit, onCheckoutClick: () -> Unit) {
+fun KeranjangScreen(onBack: () -> Unit, onCheckoutClick: (List<Map<String, Any>>) -> Unit) {
     val context = LocalContext.current
     var listKeranjang by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
+    var selectedIds by remember { mutableStateOf(setOf<String>()) }
     var isLoading by remember { mutableStateOf(true) }
     var isError by remember { mutableStateOf(false) }
 
@@ -137,10 +148,12 @@ fun KeranjangScreen(onBack: () -> Unit, onCheckoutClick: () -> Unit) {
         }
     }
 
-    val totalHarga = listKeranjang.sumOf { item ->
-        val hargaStr = item["harga"]?.toString() ?: "0"
-        hargaStr.replace(Regex("[^0-9]"), "").toLongOrNull() ?: 0L
-    }
+    val totalHarga = listKeranjang
+        .filter { selectedIds.contains(it["id_barang"]?.toString()) }
+        .sumOf { item ->
+            val hargaStr = item["harga"]?.toString() ?: "0"
+            hargaStr.replace(Regex("[^0-9]"), "").toLongOrNull() ?: 0L
+        }
 
     val formatTotal = NumberFormat.getInstance(Locale("id", "ID")).format(totalHarga)
 
@@ -192,26 +205,46 @@ fun KeranjangScreen(onBack: () -> Unit, onCheckoutClick: () -> Unit) {
                     Text("Keranjang kosong", color = Color.Gray)
                 }
             } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 16.dp)
-                ) {
-                    items(listKeranjang) { item ->
-                        ItemKeranjang(
-                            item = item,
-                            onDelete = {
-                                val uid = FirebaseAuth.getInstance().currentUser?.uid
-                                val idBarang = item["id_barang"]?.toString()
-                                if (uid != null && idBarang != null) {
-                                    FirebaseFirestore.getInstance()
-                                        .collection("users")
-                                        .document(uid)
-                                        .collection("keranjang")
-                                        .document(idBarang)
-                                        .delete()
-                                }
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 20.dp)) {
+                        Checkbox(
+                            checked = selectedIds.size == listKeranjang.size && listKeranjang.isNotEmpty(),
+                            onCheckedChange = { isChecked ->
+                                selectedIds = if (isChecked) listKeranjang.mapNotNull { it["id_barang"]?.toString() }.toSet() else emptySet()
                             }
                         )
+                        Text("Pilih Semua")
+                    }
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(bottom = 16.dp)
+                    ) {
+                        items(listKeranjang) { item ->
+                            val idBarang = item["id_barang"]?.toString() ?: ""
+                            ItemKeranjang(
+                                item = item,
+                                isChecked = selectedIds.contains(idBarang),
+                                onCheckedChange = { isChecked ->
+                                    selectedIds = if (isChecked) {
+                                        selectedIds + idBarang
+                                    } else {
+                                        selectedIds - idBarang
+                                    }
+                                },
+                                onDelete = {
+                                    val uid = FirebaseAuth.getInstance().currentUser?.uid
+                                    val idBarang = item["id_barang"]?.toString()
+                                    if (uid != null && idBarang != null) {
+                                        FirebaseFirestore.getInstance()
+                                            .collection("users")
+                                            .document(uid)
+                                            .collection("keranjang")
+                                            .document(idBarang)
+                                            .delete()
+                                    }
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -229,7 +262,8 @@ fun KeranjangScreen(onBack: () -> Unit, onCheckoutClick: () -> Unit) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
-                ) {
+                )
+                {
                     Text(
                         text = "Total Harga",
                         fontSize = 18.sp,
@@ -248,17 +282,18 @@ fun KeranjangScreen(onBack: () -> Unit, onCheckoutClick: () -> Unit) {
 
                 Button(
                     onClick = {
-                        if (listKeranjang.isNotEmpty()) {
-                            onCheckoutClick()
+                        val barangTerpilih = listKeranjang.filter { selectedIds.contains(it["id_barang"]?.toString()) }
+                        if (barangTerpilih.isNotEmpty()) {
+                            onCheckoutClick(barangTerpilih)
                         } else {
-                            Toast.makeText(context, "Keranjang kosong", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Pilih barang terlebih dahulu", Toast.LENGTH_SHORT).show()
                         }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (listKeranjang.isNotEmpty()) Color(0xFF8B1C31) else Color.Gray
+                        containerColor = if (selectedIds.isNotEmpty()) Color(0xFF8B1C31) else Color.Gray
                     ),
                     shape = RoundedCornerShape(16.dp)
                 ) {

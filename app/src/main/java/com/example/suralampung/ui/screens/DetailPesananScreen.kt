@@ -53,30 +53,19 @@ import java.text.NumberFormat
 import java.util.Locale
 
 @Composable
-fun DetailPesananScreen(onBack: () -> Unit, onSuccess: () -> Unit) {
+fun DetailPesananScreen(
+    onBack: () -> Unit,
+    onSuccess: () -> Unit,
+    dataPesanan: List<Map<String, Any>>
+) {
     val context = LocalContext.current
-    var listPesanan by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(true) }
+    val listPesanan = dataPesanan
+    val isLoading = false
     var isProcessing by remember { mutableStateOf(false) }
     var showSuccessDialog by remember { mutableStateOf(false) }
 
     val db = FirebaseFirestore.getInstance()
     val currentUser = FirebaseAuth.getInstance().currentUser
-
-    LaunchedEffect(Unit) {
-        currentUser?.uid?.let { uid ->
-            db.collection("users").document(uid).collection("keranjang")
-                .get()
-                .addOnSuccessListener { snapshot ->
-                    listPesanan = snapshot.documents.map { it.data ?: emptyMap() }
-                    isLoading = false
-                }
-                .addOnFailureListener {
-                    isLoading = false
-                }
-        }
-    }
-
     val totalHargaBarang = listPesanan.sumOf { item ->
         val hargaStr = item["harga"]?.toString() ?: "0"
         hargaStr.replace(Regex("[^0-9]"), "").toLongOrNull() ?: 0L

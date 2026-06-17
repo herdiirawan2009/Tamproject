@@ -3,6 +3,7 @@ package com.example.suralampung.navigation
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -22,10 +23,12 @@ import com.example.suralampung.ui.screens.ChatPenjualScreen
 import com.example.suralampung.ui.screens.TambahSumberDayaScreen
 import com.example.suralampung.ui.screens.PengaturanScreen
 import com.example.suralampung.ui.screens.PusatBantuanScreen
-import com.google.firebase.auth.FirebaseAuth
+import com.example.suralampung.viewmodel.SharedViewModel
 
 @Composable
 fun AppNavigation(navController: NavHostController) {
+    val sharedViewModel: SharedViewModel = viewModel()
+
     NavHost(
         navController = navController,
         startDestination = "login",
@@ -113,7 +116,8 @@ fun AppNavigation(navController: NavHostController) {
                 onBack = {
                     navController.popBackStack()
                 },
-                onCheckoutClick = {
+                onCheckoutClick = { barangDipilih ->
+                    sharedViewModel.barangTerpilih = barangDipilih
                     navController.navigate("detail_pesanan")
                 }
             )
@@ -128,7 +132,8 @@ fun AppNavigation(navController: NavHostController) {
                     navController.navigate("riwayat") {
                         popUpTo("home") { inclusive = false }
                     }
-                }
+                },
+                dataPesanan = sharedViewModel.barangTerpilih
             )
         }
 
@@ -154,7 +159,7 @@ fun AppNavigation(navController: NavHostController) {
                     navController.navigate("pengaturan")
                 },
                 onBantuanClick = {
-                    navController.navigate("pusat_bantuan")
+                    navController.popBackStack()
                 }
             )
         }

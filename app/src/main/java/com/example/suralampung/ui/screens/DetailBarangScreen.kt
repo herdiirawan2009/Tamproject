@@ -181,7 +181,7 @@ fun DetailBarangScreen(
                                 onClick = {
                                     if (currentUserUid != null) {
                                         val cartItem = hashMapOf(
-                                            "id_barang" to currentBarang.nama,
+                                            "id_barang" to currentBarang.id,
                                             "nama" to currentBarang.nama,
                                             "harga" to currentBarang.harga,
                                             "gambar" to currentBarang.imageUrl,
@@ -191,7 +191,7 @@ fun DetailBarangScreen(
                                             .collection("users")
                                             .document(currentUserUid)
                                             .collection("keranjang")
-                                            .document(currentBarang.nama)
+                                            .document(currentBarang.id)
                                             .set(cartItem)
                                             .addOnSuccessListener {
                                                 Toast.makeText(context, "Berhasil masuk keranjang", Toast.LENGTH_SHORT).show()
@@ -213,8 +213,6 @@ fun DetailBarangScreen(
                                     contentDescription = null,
                                     modifier = Modifier.size(20.dp)
                                 )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Beli", fontWeight = FontWeight.Bold)
                             }
                         }
                     }
